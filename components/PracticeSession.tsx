@@ -195,12 +195,21 @@ export default function PracticeSession({
 
 export function HeadwordCells({ word }: { word: string }) {
   const chars = Array.from(word);
+  const cellSizeClass =
+    chars.length > 12
+      ? "h-9 w-9 text-lg sm:h-10 sm:w-10 sm:text-xl"
+      : chars.length > 8
+        ? "h-10 w-10 text-xl sm:h-11 sm:w-11 sm:text-2xl"
+        : chars.length > 5
+          ? "h-12 w-12 text-2xl"
+          : "h-14 w-14 text-3xl";
+
   return (
-    <div className="flex gap-1.5">
+    <div className="flex flex-wrap justify-center gap-1.5">
       {chars.map((ch, i) => (
         <div
           key={i}
-          className="kanji-cell flex h-14 w-14 items-center justify-center rounded-sm font-jp text-3xl text-sumi"
+          className={`kanji-cell flex shrink-0 items-center justify-center rounded-sm font-jp text-sumi ${cellSizeClass}`}
         >
           {ch}
         </div>
