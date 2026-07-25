@@ -202,7 +202,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
               <p className="mt-1 text-xl font-semibold text-ai-deep">{current.meaning}</p>
               {current.example_jp && (
                 <div className="mt-3 border-t border-line/60 pt-3 text-sm">
-                  <p className="font-jp text-base text-sumi">{current.example_jp}</p>
+                  <p className="font-jp text-lg text-sumi sm:text-xl">{current.example_jp}</p>
                   {current.example_romaji && (
                     <p className="mt-0.5 text-sumi-soft">{current.example_romaji}</p>
                   )}
