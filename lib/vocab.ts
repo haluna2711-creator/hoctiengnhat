@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { JlptLevel, Vocab, VocabDraft } from "@/lib/types";
 
 const SELECT_COLUMNS =
-  "id, kanji, hiragana, romaji, meaning, example_jp, example_vi, audio_url, jlpt_level, tags, created_at";
+  "id, kanji, hiragana, romaji, meaning, example_jp, example_romaji, example_vi, audio_url, jlpt_level, tags, created_at";
 
 export interface VocabFilter {
   level?: JlptLevel | "all";
