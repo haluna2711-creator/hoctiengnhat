@@ -94,7 +94,7 @@ export default async function HomePage() {
       {/* Nạp từ vựng nhanh */}
       <section className="mx-auto max-w-6xl px-5 pb-20">
         <div className="rounded-xl2 border border-line/70 bg-washi-deep/60 p-6 sm:p-8">
-          <h2 className="font-display text-2xl text-sumi">Nạp từ vựng thật nhanh</h2>
+          <h2 className="font-display text-2xl text-sumi">Tôi muốn trở thành người đóng góp!</h2>
           <p className="mt-2 max-w-2xl text-sumi-soft">
             Bạn muốn trở thành người đóng góp cho kho dữ liệu từ vựng tiếng Nhật đồ sộ? Liên hệ admin qua email bên dưới.
           </p>
