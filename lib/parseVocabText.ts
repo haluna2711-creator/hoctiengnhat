@@ -52,7 +52,7 @@ function parseLevel(field: string | undefined): JlptLevel {
  * Mỗi dòng là 1 từ, các cột cách nhau bằng Tab (khuyên dùng, dán trực
  * tiếp từ Google Sheets/Excel), "|" hoặc ",".  Thứ tự cột cố định:
  *
- *   kanji | hiragana | nghĩa | romaji | cấp độ | câu ví dụ (JP) | câu ví dụ (VI) | nhãn
+ *   kanji | hiragana | nghĩa | romaji | cấp độ | câu ví dụ (JP) | câu ví dụ (romaji) | câu ví dụ (VI) | nhãn
  *
  * - Cột "kanji" để trống nếu từ chỉ có hiragana/katakana (VD: これ).
  * - Chỉ bắt buộc có "hiragana" và "nghĩa" — các cột còn lại có thể bỏ
@@ -81,6 +81,7 @@ export function parseVocabText(text: string): ParseResult {
     let romaji = "";
     let jlptField = "";
     let exampleJp = "";
+    let exampleRomaji = "";
     let exampleVi = "";
     let tagsField = "";
 
@@ -94,6 +95,7 @@ export function parseVocabText(text: string): ParseResult {
         romaji = "",
         jlptField = "",
         exampleJp = "",
+        exampleRomaji = "",
         exampleVi = "",
         tagsField = "",
       ] = cols;
@@ -122,6 +124,7 @@ export function parseVocabText(text: string): ParseResult {
       meaning,
       romaji: romaji || null,
       example_jp: exampleJp || null,
+      example_romaji: exampleRomaji || null,
       example_vi: exampleVi || null,
       audio_url: null,
       jlpt_level: parseLevel(jlptField),
