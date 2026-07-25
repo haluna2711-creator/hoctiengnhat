@@ -7,6 +7,7 @@ import { chunk, shuffle } from "@/lib/practice";
 interface Props {
   pool: Vocab[];
   questionCount: number;
+  countdownEnabled: boolean;
   onFinish: (result: { pairs: number; timeMs: number; mistakes: number }) => void;
 }
 
@@ -18,6 +19,9 @@ interface CardItem {
 }
 
 const PAIRS_PER_ROUND = 6;
+/** Ngân sách thời gian mỗi cặp từ khi bật đếm ngược — hết giờ của cả vòng
+ * mà chưa ghép xong sẽ tự tính các cặp còn lại là sai rồi chuyển vòng. */
+const TIME_LIMIT_SECONDS_PER_PAIR = 20;
 
 function buildRoundCards(vocabs: Vocab[]): CardItem[] {
   const wordCards: CardItem[] = vocabs.map((v) => ({
@@ -42,7 +46,7 @@ function formatTime(ms: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export default function MatchSession({ pool, questionCount, onFinish }: Props) {
+export default function MatchSession({ pool, questionCount, countdownEnabled, onFinish }: Props) {
   const words = useMemo(
     () => shuffle(pool).slice(0, Math.min(questionCount, pool.length)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,6 +63,9 @@ export default function MatchSession({ pool, questionCount, onFinish }: Props) {
   const [mistakes, setMistakes] = useState(0);
   const [locked, setLocked] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [roundTimeLeft, setRoundTimeLeft] = useState(
+    (rounds[0]?.length ?? 0) * TIME_LIMIT_SECONDS_PER_PAIR
+  );
 
   const startRef = useRef(Date.now());
   const doneRef = useRef(false);
@@ -77,10 +84,39 @@ export default function MatchSession({ pool, questionCount, onFinish }: Props) {
     setSelected([]);
     setMatchedIds(new Set());
     setWrongIds(new Set());
+    setRoundTimeLeft((rounds[roundIndex]?.length ?? 0) * TIME_LIMIT_SECONDS_PER_PAIR);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundIndex]);
 
   const currentRoundPairCount = rounds[roundIndex]?.length ?? 0;
+
+  // Đếm ngược cho cả vòng (chỉ chạy khi bật "Đếm ngược 20 giây" ở setup).
+  // Hết giờ mà vẫn còn cặp chưa ghép sẽ tự tính các cặp đó là sai rồi
+  // chuyển sang vòng kế tiếp (hoặc kết thúc nếu là vòng cuối).
+  useEffect(() => {
+    if (!countdownEnabled) return;
+    if (currentRoundPairCount === 0) return;
+    if (matchedIds.size === currentRoundPairCount) return; // đã ghép xong, effect khác lo việc chuyển vòng
+    if (roundTimeLeft <= 0) {
+      const remaining = currentRoundPairCount - matchedIds.size;
+      setMistakes((m) => m + remaining);
+      totalMistakesRef.current += remaining;
+      if (roundIndex + 1 < rounds.length) {
+        setRoundIndex((r) => r + 1);
+      } else {
+        doneRef.current = true;
+        onFinish({
+          pairs: words.length,
+          timeMs: Date.now() - startRef.current,
+          mistakes: totalMistakesRef.current,
+        });
+      }
+      return;
+    }
+    const t = window.setTimeout(() => setRoundTimeLeft((s) => s - 1), 1000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roundTimeLeft, countdownEnabled, currentRoundPairCount, matchedIds]);
 
   useEffect(() => {
     if (currentRoundPairCount === 0) return;
@@ -144,9 +180,22 @@ export default function MatchSession({ pool, questionCount, onFinish }: Props) {
         <p>
           Vòng {roundIndex + 1}/{rounds.length}
         </p>
-        <p>
-          Thời gian {formatTime(elapsedMs)} · Sai {mistakes} lần
-        </p>
+        <div className="flex items-center gap-2">
+          {countdownEnabled && (
+            <span
+              className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold tabular-nums ${
+                roundTimeLeft <= 10
+                  ? "border-beni bg-beni/10 text-beni-deep"
+                  : "border-line text-sumi-soft"
+              }`}
+            >
+              ⏱ {formatTime(roundTimeLeft * 1000)}
+            </span>
+          )}
+          <p>
+            Thời gian {formatTime(elapsedMs)} · Sai {mistakes} lần
+          </p>
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3">
