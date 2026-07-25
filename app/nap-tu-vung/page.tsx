@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { isAdminUnlocked, markAdminUnlocked, sha256Hex } from "@/lib/adminAuth";
 import { parseVocabText, type ParsedRow } from "@/lib/parseVocabText";
-import { insertVocabBatch } from "@/lib/vocab";
-import { headword } from "@/lib/types";
+import { findExistingVocabKeys, insertVocabBatch } from "@/lib/vocab";
+import { headword, vocabKey } from "@/lib/types";
+
+type DuplicateKind = "db" | "batch";
 
 const EXAMPLE_TEXT = `食べる\tたべる\tăn\ttaberu\tn5\t毎日ご飯を食べる。\tmainichi gohan wo taberu.\tăn cơm mỗi ngày
 \tこれ\tcái này\tkore\tn5
@@ -72,13 +74,56 @@ function ImportTool() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [saveErr, setSaveErr] = useState<string | null>(null);
+  const [duplicates, setDuplicates] = useState<Map<number, DuplicateKind>>(new Map());
+  const [checkingDup, setCheckingDup] = useState(false);
 
-  function handleParse() {
+  async function handleParse() {
     const result = parseVocabText(text);
     setParsed(result);
-    setExcluded(new Set());
     setSaveMsg(null);
     setSaveErr(null);
+    setDuplicates(new Map());
+
+    if (result.rows.length === 0) {
+      setExcluded(new Set());
+      return;
+    }
+
+    setCheckingDup(true);
+    try {
+      const existingKeys = await findExistingVocabKeys(
+        result.rows.map((r) => r.draft)
+      );
+      const seenInBatch = new Map<string, number>(); // key -> dòng đầu tiên gặp
+      const dupMap = new Map<number, DuplicateKind>();
+      const autoExcluded = new Set<number>();
+
+      for (const row of result.rows) {
+        const key = vocabKey(row.draft.kanji, row.draft.hiragana);
+        if (existingKeys.has(key)) {
+          dupMap.set(row.line, "db");
+          autoExcluded.add(row.line);
+          continue;
+        }
+        if (seenInBatch.has(key)) {
+          dupMap.set(row.line, "batch");
+          autoExcluded.add(row.line);
+        } else {
+          seenInBatch.set(key, row.line);
+        }
+      }
+
+      setDuplicates(dupMap);
+      setExcluded(autoExcluded);
+    } catch {
+      // Nếu kiểm tra trùng thất bại (vd mất mạng), vẫn cho xem trước
+      // bình thường — chỉ là không có cảnh báo trùng tự động, người
+      // dùng vẫn có thể tự bỏ chọn dòng trùng bằng tay.
+      setDuplicates(new Map());
+      setExcluded(new Set());
+    } finally {
+      setCheckingDup(false);
+    }
   }
 
   function toggleExclude(line: number) {
@@ -158,10 +203,10 @@ function ImportTool() {
       <button
         type="button"
         onClick={handleParse}
-        disabled={!text.trim()}
+        disabled={!text.trim() || checkingDup}
         className="mt-4 rounded-full bg-ai px-6 py-2.5 text-sm font-semibold text-washi transition hover:bg-ai-deep disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Tách và xem trước
+        {checkingDup ? "Đang kiểm tra trùng..." : "Tách và xem trước"}
       </button>
 
       {parsed && (
@@ -170,6 +215,17 @@ function ImportTool() {
             Nhận diện phân cách: {parsed.delimiterLabel} · {parsed.rows.length} dòng hợp lệ
             {parsed.errors.length > 0 && `, ${parsed.errors.length} dòng lỗi`}.
           </p>
+
+          {duplicates.size > 0 && (
+            <p className="mt-2 rounded-lg border border-beni/40 bg-beni/5 px-3 py-2 text-sm text-beni-deep">
+              Phát hiện {duplicates.size} từ trùng lặp (
+              {Array.from(duplicates.values()).filter((k) => k === "db").length} đã có sẵn
+              trong kho, {" "}
+              {Array.from(duplicates.values()).filter((k) => k === "batch").length} trùng
+              nhau ngay trong danh sách vừa dán) — đã tự động bỏ chọn, bạn có thể tick lại
+              nếu vẫn muốn lưu.
+            </p>
+          )}
 
           {parsed.errors.length > 0 && (
             <div className="mt-3 rounded-lg border border-beni/40 bg-beni/5 p-4 text-sm text-beni-deep">
@@ -196,11 +252,13 @@ function ImportTool() {
                     <th className="px-3 py-2">Nghĩa</th>
                     <th className="px-3 py-2">Cấp độ</th>
                     <th className="px-3 py-2">Câu ví dụ (romaji)</th>
+                    <th className="px-3 py-2">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody>
                   {parsed.rows.map((r) => {
                     const isExcluded = excluded.has(r.line);
+                    const dupKind = duplicates.get(r.line);
                     return (
                       <tr
                         key={r.line}
@@ -219,6 +277,21 @@ function ImportTool() {
                         <td className="px-3 py-2">{r.draft.meaning}</td>
                         <td className="px-3 py-2 uppercase text-sumi-soft">{r.draft.jlpt_level}</td>
                         <td className="px-3 py-2 text-sumi-soft">{r.draft.example_romaji}</td>
+                        <td className="px-3 py-2">
+                          {dupKind === "db" && (
+                            <span className="rounded-full bg-beni/10 px-2.5 py-1 text-xs font-semibold text-beni-deep">
+                              Đã có trong kho
+                            </span>
+                          )}
+                          {dupKind === "batch" && (
+                            <span className="rounded-full bg-beni/10 px-2.5 py-1 text-xs font-semibold text-beni-deep">
+                              Trùng trong danh sách
+                            </span>
+                          )}
+                          {!dupKind && (
+                            <span className="text-xs text-sumi-soft/60">Từ mới</span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
