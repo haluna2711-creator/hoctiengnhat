@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { headword, normalizeAnswer, type Vocab } from "@/lib/types";
 import {
   buildMcQuestion,
@@ -16,12 +16,20 @@ import SpeakerButton from "@/components/SpeakerButton";
 export type PracticeMode = "mc" | "hiragana" | "kanji" | "flashcard" | "match";
 export type ScoredPracticeMode = "mc" | "hiragana" | "kanji";
 export type KanjiDirection = "xuoi" | "nguoc";
+type FeedbackState = "idle" | "correct" | "wrong" | "timeout";
+
+/** Số giây tối đa cho mỗi câu — hết giờ mà chưa trả lời sẽ tự tính là sai. */
+const TIME_LIMIT_SECONDS = 20;
+/** Độ trễ trước khi tự động sang câu kế tiếp khi bật "Tự động chuyển câu". */
+const AUTO_ADVANCE_DELAY_MS = 1300;
 
 interface Props {
   pool: Vocab[];
   mode: ScoredPracticeMode;
   kanjiDirection: KanjiDirection;
   questionCount: number;
+  autoAdvance: boolean;
+  countdownEnabled: boolean;
   onFinish: (result: { correct: number; total: number }) => void;
 }
 
@@ -30,6 +38,8 @@ export default function PracticeSession({
   mode,
   kanjiDirection,
   questionCount,
+  autoAdvance,
+  countdownEnabled,
   onFinish,
 }: Props) {
   const sessionPool = useMemo(() => {
@@ -52,9 +62,34 @@ export default function PracticeSession({
 
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
+  const [feedback, setFeedback] = useState<FeedbackState>("idle");
   const [inputValue, setInputValue] = useState("");
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(TIME_LIMIT_SECONDS);
+
+  // Đếm ngược cho câu hiện tại (chỉ chạy khi bật "Đếm ngược 20 giây" ở setup).
+  // Dừng khi đã có feedback (đã trả lời hoặc đã hết giờ); khi chạm 0 mà vẫn
+  // đang "idle" thì chuyển sang "timeout".
+  useEffect(() => {
+    if (!countdownEnabled) return;
+    if (feedback !== "idle") return;
+    if (timeLeft <= 0) {
+      setFeedback("timeout");
+      return;
+    }
+    const t = setTimeout(() => setTimeLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timeLeft, feedback, countdownEnabled]);
+
+  // Tự động chuyển câu (nếu bật) sau khi đã có kết quả — đúng, sai, hoặc hết giờ.
+  useEffect(() => {
+    if (!autoAdvance) return;
+    if (feedback === "idle") return;
+    const wasCorrect = feedback === "correct";
+    const t = setTimeout(() => goNext(wasCorrect), AUTO_ADVANCE_DELAY_MS);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback, autoAdvance]);
 
   if (words.length === 0) {
     return (
@@ -74,6 +109,7 @@ export default function PracticeSession({
     setFeedback("idle");
     setInputValue("");
     setSelectedOption(null);
+    setTimeLeft(TIME_LIMIT_SECONDS);
   }
 
   function goNext(wasCorrect: boolean) {
@@ -108,7 +144,20 @@ export default function PracticeSession({
 
   return (
     <div>
-      <p className="text-sm font-medium tracking-wide text-sumi-soft">{progressLabel}</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium tracking-wide text-sumi-soft">{progressLabel}</p>
+        {countdownEnabled && feedback === "idle" && (
+          <span
+            className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold tabular-nums ${
+              timeLeft <= 5
+                ? "border-beni bg-beni/10 text-beni-deep"
+                : "border-line text-sumi-soft"
+            }`}
+          >
+            ⏱ {timeLeft}s
+          </span>
+        )}
+      </div>
 
       <div className="mt-4 rounded-xl2 border border-line/70 bg-washi/70 p-6 shadow-card sm:p-10">
         {mode === "mc" && (
@@ -177,7 +226,14 @@ export default function PracticeSession({
                 feedback === "correct" ? "text-midori-deep" : "text-beni-deep"
               }`}
             >
-              {feedback === "correct" ? "Chính xác!" : "Chưa đúng."}
+              {feedback === "correct"
+                ? "Chính xác!"
+                : feedback === "timeout"
+                  ? "Hết giờ! Tính là sai."
+                  : "Chưa đúng."}
+              {autoAdvance && (
+                <span className="ml-2 font-normal text-sumi-soft">Đang chuyển câu...</span>
+              )}
             </p>
             <button
               type="button"
@@ -226,7 +282,7 @@ function McQuestionView({
 }: {
   question: McQuestion;
   selectedOption: number | null;
-  feedback: "idle" | "correct" | "wrong";
+  feedback: "idle" | "correct" | "wrong" | "timeout";
   onSelect: (i: number) => void;
 }) {
   const { vocab, direction, options, correctIndex } = question;
@@ -310,7 +366,7 @@ function TypedQuestionView({
   inputValue: string;
   onInputChange: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
-  feedback: "idle" | "correct" | "wrong";
+  feedback: "idle" | "correct" | "wrong" | "timeout";
   expected: string;
   inputPlaceholder: string;
   inputClassName?: string;
@@ -341,7 +397,7 @@ function TypedQuestionView({
         )}
       </form>
 
-      {feedback === "wrong" && (
+      {(feedback === "wrong" || feedback === "timeout") && (
         <p className="mt-3 text-sm text-beni-deep">
           Đáp án đúng: <span className="font-jp text-base">{expected}</span>
         </p>
