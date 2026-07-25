@@ -22,10 +22,13 @@
   --color-ai-deep: 110 37 45; /* #6E252D — hover/nhấn đậm hơn */
   --color-ai-soft: 201 138 147; /* #C98A93 — sắc nhạt của Cordovan */
 
-  --color-beni: 169 87 90; /* đỏ đất — dùng cho đúng/cảnh báo, tách biệt với Cordovan */
+  --color-beni: 169 87 90; /* đỏ đất — dùng cho sai/cảnh báo, tách biệt với Cordovan */
   --color-beni-deep: 131 63 66;
   --color-kin: 176 138 91; /* vàng ấm — nhãn cấp độ JLPT */
   --color-line: 232 210 184; /* viền */
+
+  --color-midori: 63 125 80; /* xanh lá — dùng riêng cho đáp án ĐÚNG, tách biệt hẳn khỏi 2 tông đỏ */
+  --color-midori-deep: 44 92 58;
 }
 
 .dark {
@@ -44,6 +47,9 @@
   --color-beni-deep: 184 75 84;
   --color-kin: 224 179 120;
   --color-line: 62 38 43;
+
+  --color-midori: 122 190 140; /* xanh lá sáng hơn để đủ tương phản trên nền tối */
+  --color-midori-deep: 92 160 112;
 }
 
 html {
