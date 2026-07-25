@@ -66,7 +66,7 @@ export default function VocabCard({ vocab }: { vocab: Vocab }) {
 
       {vocab.example_jp && (
         <div className="mt-3 border-t border-line/60 pt-3 text-sm">
-          <p className="font-jp text-sumi">{vocab.example_jp}</p>
+          <p className="font-jp text-lg text-sumi sm:text-xl">{vocab.example_jp}</p>
           {vocab.example_romaji && (
             <p className="mt-0.5 italic text-sumi-soft">{vocab.example_romaji}</p>
           )}
