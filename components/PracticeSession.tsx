@@ -110,7 +110,7 @@ export default function PracticeSession({
     <div>
       <p className="text-sm font-medium tracking-wide text-sumi-soft">{progressLabel}</p>
 
-      <div className="mt-4 rounded-xl2 border border-line/70 bg-washi/70 p-6 shadow-card sm:p-8">
+      <div className="mt-4 rounded-xl2 border border-line/70 bg-washi/70 p-6 shadow-card sm:p-10">
         {mode === "mc" && (
           <McQuestionView
             question={mcQuestions[index]}
@@ -233,7 +233,7 @@ function McQuestionView({
 
   return (
     <div>
-      <p className="text-sm text-sumi-soft">
+      <p className="text-sm text-sumi-soft sm:text-base">
         {direction === "word-to-meaning" ? "Từ này có nghĩa là gì?" : "Từ nào có nghĩa dưới đây?"}
       </p>
 
@@ -246,24 +246,24 @@ function McQuestionView({
             </div>
           </div>
         ) : (
-          <p className="text-xl text-sumi">{vocab.meaning}</p>
+          <p className="text-2xl text-sumi sm:text-3xl">{vocab.meaning}</p>
         )}
       </div>
 
-      <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4">
         {options.map((opt, i) => {
           const isSelected = selectedOption === i;
           const isCorrectOpt = feedback !== "idle" && i === correctIndex;
           const isWrongSelected = feedback !== "idle" && isSelected && i !== correctIndex;
 
           let cls =
-            "flex items-center justify-between gap-2 rounded-lg border px-4 py-3 text-left text-sm transition border-line hover:border-ai";
+            "flex min-h-[64px] items-center justify-between gap-3 rounded-xl border px-5 py-4 text-left text-base transition border-line hover:border-ai sm:min-h-[76px] sm:px-6 sm:text-lg";
           if (isCorrectOpt)
             cls =
-              "flex items-center justify-between gap-2 rounded-lg border-2 border-midori bg-midori/10 px-4 py-3 text-left text-sm font-medium text-midori-deep";
+              "flex min-h-[64px] items-center justify-between gap-3 rounded-xl border-2 border-midori bg-midori/10 px-5 py-4 text-left text-base font-medium text-midori-deep sm:min-h-[76px] sm:px-6 sm:text-lg";
           else if (isWrongSelected)
             cls =
-              "flex items-center justify-between gap-2 rounded-lg border-2 border-beni bg-beni/10 px-4 py-3 text-left text-sm font-medium text-beni-deep";
+              "flex min-h-[64px] items-center justify-between gap-3 rounded-xl border-2 border-beni bg-beni/10 px-5 py-4 text-left text-base font-medium text-beni-deep sm:min-h-[76px] sm:px-6 sm:text-lg";
 
           return (
             <button
@@ -271,16 +271,16 @@ function McQuestionView({
               type="button"
               disabled={feedback !== "idle"}
               onClick={() => onSelect(i)}
-              className={`${cls} ${direction === "meaning-to-word" ? "font-jp text-lg" : ""}`}
+              className={`${cls} ${direction === "meaning-to-word" ? "font-jp text-xl sm:text-2xl" : ""}`}
             >
               <span>{opt}</span>
               {isCorrectOpt && (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-midori text-xs text-washi">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-midori text-sm text-washi sm:h-7 sm:w-7">
                   ✓
                 </span>
               )}
               {isWrongSelected && (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-beni text-xs text-washi">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-beni text-sm text-washi sm:h-7 sm:w-7">
                   ✗
                 </span>
               )}
