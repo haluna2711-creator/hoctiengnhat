@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
   { href: "/", label: "Trang chủ" },
@@ -44,12 +45,15 @@ export default function Header() {
           ))}
         </nav>
 
-        <Link
-          href="/luyen-tap"
-          className="hidden shrink-0 rounded-full bg-ai px-5 py-2.5 text-sm font-semibold text-washi shadow-card transition hover:bg-ai-deep md:inline-block"
-        >
-          Bắt đầu luyện tập
-        </Link>
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
+          <ThemeToggle />
+          <Link
+            href="/luyen-tap"
+            className="rounded-full bg-ai px-5 py-2.5 text-sm font-semibold text-washi shadow-card transition hover:bg-ai-deep"
+          >
+            Bắt đầu luyện tập
+          </Link>
+        </div>
 
         <button
           type="button"
@@ -88,6 +92,10 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <div className="mt-2 flex items-center justify-between gap-3 px-3">
+            <span className="text-xs text-sumi-soft">Giao diện</span>
+            <ThemeToggle />
+          </div>
           <Link
             href="/luyen-tap"
             onClick={() => setOpen(false)}
