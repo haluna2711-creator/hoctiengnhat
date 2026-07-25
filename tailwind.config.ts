@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,35 +9,31 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Nền chính — Seashell #FFF5EE, ấm và sáng như trong bảng màu tham khảo.
-        washi: "#FFF5EE",
-        "washi-deep": "#F6E3DA",
-        // Chữ chính — nâu plum đậm, ấm hơn đen thuần để hợp tông hồng đất.
-        sumi: "#3B2A2C",
-        "sumi-soft": "#8C6B6B",
-        // Rosy Brown #BC8F8F — màu nhấn chính (nút, link, tiêu đề, khối lớn).
-        ai: "#BC8F8F",
-        "ai-deep": "#93696A",
-        "ai-soft": "#D8B7B7",
-        // Đỏ hồng đất — dùng tiết chế: đúng/nhấn mạnh/dấu mốc.
-        beni: "#A9575A",
-        "beni-deep": "#833F42",
-        // Vàng ấm — nhãn cấp độ JLPT.
-        kin: "#B08A5B",
-        line: "#E7D0C8",
+        // Toàn bộ token màu bên dưới trỏ tới CSS variable khai báo ở
+        // globals.css (:root cho light, .dark cho dark) thay vì hex cố
+        // định — nhờ vậy đổi theme chỉ cần sửa 1 chỗ, và mọi cách dùng
+        // có modifier độ mờ sẵn có trong code (VD: bg-ai/5, border-line/70)
+        // vẫn hoạt động đúng vì Tailwind tự ghép rgb(var(...) / alpha).
+        washi: "rgb(var(--color-washi) / <alpha-value>)",
+        "washi-deep": "rgb(var(--color-washi-deep) / <alpha-value>)",
+        sumi: "rgb(var(--color-sumi) / <alpha-value>)",
+        "sumi-soft": "rgb(var(--color-sumi-soft) / <alpha-value>)",
+        ai: "rgb(var(--color-ai) / <alpha-value>)",
+        "ai-deep": "rgb(var(--color-ai-deep) / <alpha-value>)",
+        "ai-soft": "rgb(var(--color-ai-soft) / <alpha-value>)",
+        beni: "rgb(var(--color-beni) / <alpha-value>)",
+        "beni-deep": "rgb(var(--color-beni-deep) / <alpha-value>)",
+        kin: "rgb(var(--color-kin) / <alpha-value>)",
+        line: "rgb(var(--color-line) / <alpha-value>)",
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],
         jp: ["var(--font-jp)", "serif"],
         body: ["var(--font-body)", "sans-serif"],
       },
-      backgroundImage: {
-        "hero-grid":
-          "linear-gradient(135deg, #FFF5EE 0%, #F9E4DC 60%, #F6E3DA 100%)",
-      },
       boxShadow: {
-        soft: "0 10px 30px -12px rgba(59, 42, 44, 0.18)",
-        card: "0 6px 18px -8px rgba(59, 42, 44, 0.16)",
+        soft: "0 10px 30px -12px rgb(var(--color-sumi) / 0.18)",
+        card: "0 6px 18px -8px rgb(var(--color-sumi) / 0.16)",
       },
       borderRadius: {
         xl2: "1.25rem",
