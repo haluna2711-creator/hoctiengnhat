@@ -69,6 +69,8 @@ function LuyenTapInner() {
   const [mode, setMode] = useState<PracticeMode>("mc");
   const [kanjiDirection, setKanjiDirection] = useState<KanjiDirection>("xuoi");
   const [flashcardReviewMode, setFlashcardReviewMode] = useState<FlashcardReviewMode>("due");
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [countdownEnabled, setCountdownEnabled] = useState(false);
   const [questionCount, setQuestionCount] = useState(10);
   const [pool, setPool] = useState<Vocab[]>([]);
   const [result, setResult] = useState<SessionResult | null>(null);
@@ -215,6 +217,34 @@ function LuyenTapInner() {
             </div>
           )}
 
+          {mode !== "flashcard" && (
+            <div>
+              <p className="mb-3 text-sm font-semibold text-sumi">Đếm ngược 20 giây mỗi câu</p>
+              <div className="flex flex-wrap gap-2">
+                <Chip active={countdownEnabled} onClick={() => setCountdownEnabled(true)}>
+                  Bật — hết giờ tự tính sai
+                </Chip>
+                <Chip active={!countdownEnabled} onClick={() => setCountdownEnabled(false)}>
+                  Tắt — không giới hạn giờ
+                </Chip>
+              </div>
+            </div>
+          )}
+
+          {(mode === "mc" || mode === "hiragana" || mode === "kanji") && (
+            <div>
+              <p className="mb-3 text-sm font-semibold text-sumi">Tự động chuyển câu</p>
+              <div className="flex flex-wrap gap-2">
+                <Chip active={autoAdvance} onClick={() => setAutoAdvance(true)}>
+                  Bật — tự sang câu tiếp theo
+                </Chip>
+                <Chip active={!autoAdvance} onClick={() => setAutoAdvance(false)}>
+                  Tắt — tự bấm "Câu tiếp theo"
+                </Chip>
+              </div>
+            </div>
+          )}
+
           <div>
             <p className="mb-3 text-sm font-semibold text-sumi">{countLabelFor(mode)}</p>
             <div className="flex flex-wrap gap-2">
@@ -247,6 +277,8 @@ function LuyenTapInner() {
               mode={mode}
               kanjiDirection={kanjiDirection}
               questionCount={questionCount}
+              autoAdvance={autoAdvance}
+              countdownEnabled={countdownEnabled}
               onFinish={handleScoreFinish}
             />
           )}
@@ -264,6 +296,7 @@ function LuyenTapInner() {
               key={sessionKey}
               pool={pool}
               questionCount={questionCount}
+              countdownEnabled={countdownEnabled}
               onFinish={handleMatchFinish}
             />
           )}
