@@ -222,8 +222,8 @@ function ImportTool() {
               {Array.from(duplicates.values()).filter((k) => k === "db").length} đã có sẵn
               trong kho, {" "}
               {Array.from(duplicates.values()).filter((k) => k === "batch").length} trùng
-              nhau ngay trong danh sách vừa dán) — đã tự động bỏ chọn, bạn có thể tick lại
-              nếu vẫn muốn lưu.
+              nhau ngay trong danh sách vừa dán) — các dòng này đã bị khoá, không thể chọn
+              lưu. Muốn lưu, hãy sửa lại nội dung dòng đó rồi tách lại từ đầu.
             </p>
           )}
 
@@ -268,8 +268,10 @@ function ImportTool() {
                           <input
                             type="checkbox"
                             checked={!isExcluded}
+                            disabled={!!dupKind}
                             onChange={() => toggleExclude(r.line)}
                             aria-label={`Bao gồm dòng ${r.line}`}
+                            className="disabled:cursor-not-allowed"
                           />
                         </td>
                         <td className="px-3 py-2 font-jp">{headword(r.draft)}</td>
