@@ -6,9 +6,9 @@ import { parseVocabText, type ParsedRow } from "@/lib/parseVocabText";
 import { insertVocabBatch } from "@/lib/vocab";
 import { headword } from "@/lib/types";
 
-const EXAMPLE_TEXT = `食べる\tたべる\tăn\ttaberu\tn5\t毎日ご飯を食べる。\tăn cơm mỗi ngày
+const EXAMPLE_TEXT = `食べる\tたべる\tăn\ttaberu\tn5\t毎日ご飯を食べる。\tmainichi gohan wo taberu.\tăn cơm mỗi ngày
 \tこれ\tcái này\tkore\tn5
-勉強\tべんきょう\thọc, việc học\tbenkyou\tn5\t\t\tdanh từ;động từ nhóm 3`;
+勉強\tべんきょう\thọc, việc học\tbenkyou\tn5\t\t\t\tdanh từ;động từ nhóm 3`;
 
 export default function NapTuVungPage() {
   const requiredHash = process.env.NEXT_PUBLIC_ADMIN_PASSWORD_HASH;
@@ -135,7 +135,7 @@ function ImportTool() {
           <strong>,</strong> nếu gõ tay. Thứ tự cột:
         </p>
         <p className="mt-2 font-mono text-xs text-sumi">
-          kanji | hiragana | nghĩa | romaji | cấp độ (n5-n1/khac) | câu ví dụ (JP) | câu ví dụ (VI) | nhãn (cách nhau bằng ;)
+          kanji | hiragana | nghĩa | romaji | cấp độ (n5-n1/khac) | câu ví dụ (JP) | câu ví dụ (romaji) | câu ví dụ (VI) | nhãn (cách nhau bằng ;)
         </p>
         <p className="mt-2">
           Chỉ <strong>hiragana</strong> và <strong>nghĩa</strong> là bắt
@@ -195,6 +195,7 @@ function ImportTool() {
                     <th className="px-3 py-2">Hiragana</th>
                     <th className="px-3 py-2">Nghĩa</th>
                     <th className="px-3 py-2">Cấp độ</th>
+                    <th className="px-3 py-2">Câu ví dụ (romaji)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -217,6 +218,7 @@ function ImportTool() {
                         <td className="px-3 py-2 font-jp">{r.draft.hiragana}</td>
                         <td className="px-3 py-2">{r.draft.meaning}</td>
                         <td className="px-3 py-2 uppercase text-sumi-soft">{r.draft.jlpt_level}</td>
+                        <td className="px-3 py-2 text-sumi-soft">{r.draft.example_romaji}</td>
                       </tr>
                     );
                   })}
