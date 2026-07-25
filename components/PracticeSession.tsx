@@ -244,7 +244,7 @@ function McQuestionView({
               <HeadwordCells word={headword(vocab)} />
               <SpeakerButton hiragana={vocab.hiragana} audioUrl={vocab.audio_url} />
             </div>
-            {vocab.romaji && <p className="mt-1 text-sm text-sumi-soft">{vocab.romaji}</p>}
+     
           </div>
         ) : (
           <p className="text-xl text-sumi">{vocab.meaning}</p>
