@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useState } from "react";
 
 export default function BackToTop() {
@@ -31,19 +30,45 @@ export default function BackToTop() {
           : "pointer-events-none translate-y-4 opacity-0"
       }`}
     >
-      {/* Con dấu triện tròn — bấm để "đóng dấu" quay lại đầu trang */}
+      {/* Đế hoa: nền giấy washi (sáng) / mực đậm (tối), viền beni mảnh */}
+      <span
+        className="absolute inset-0 rounded-full bg-washi shadow-soft ring-1 ring-beni/25 transition-colors duration-300 dark:bg-zinc-900 dark:ring-beni/40"
+        aria-hidden="true"
+      />
+
+      {/* Hoa anh đào — 5 cánh, bấm để "rụng hoa" quay lại đầu trang */}
       <svg
         viewBox="0 0 100 100"
-        className="h-full w-full fill-washi stroke-beni drop-shadow-soft transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-active:scale-90"
+        className="relative h-[68%] w-[68%] drop-shadow-soft transition-transform duration-500 ease-out group-hover:rotate-[18deg] group-active:scale-90"
       >
-        <circle cx="50" cy="50" r="47" strokeWidth="3" />
-        <circle cx="50" cy="50" r="40" fill="none" strokeWidth="1.4" opacity="0.6" />
-        <path
-          d="M50 38 L61 58 L39 58 Z"
-          className="fill-beni transition-transform duration-300 group-hover:-translate-y-0.5"
-        />
-        <rect x="42" y="60" width="16" height="4" rx="1" className="fill-beni" />
+        <g className="origin-center transition-transform duration-500 ease-out group-hover:scale-105">
+          {[0, 72, 144, 216, 288].map((deg) => (
+            <path
+              key={deg}
+              d="M50 52
+                 C41 45 36 32 39 21
+                 C40.5 15.5 45.5 13 50 18
+                 C54.5 13 59.5 15.5 61 21
+                 C64 32 59 45 50 52 Z"
+              transform={`rotate(${deg} 50 50)`}
+              className="fill-beni transition-opacity duration-300 group-hover:opacity-90"
+            />
+          ))}
+        </g>
+
+        {/* Nhụy hoa */}
+        <circle cx="50" cy="50" r="6.5" className="fill-washi dark:fill-zinc-900" />
+        {[0, 60, 120, 180, 240, 300].map((deg) => (
+          <circle
+            key={deg}
+            cx={50 + 9 * Math.cos((deg * Math.PI) / 180)}
+            cy={50 + 9 * Math.sin((deg * Math.PI) / 180)}
+            r="1.3"
+            className="fill-beni"
+          />
+        ))}
       </svg>
+
       <span className="sr-only">Lên đầu trang</span>
     </button>
   );
