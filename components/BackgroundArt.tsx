@@ -19,7 +19,7 @@ export default function BackgroundArt() {
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* Lưới ô vuông nhạt chạy dọc mép phải, như trang giấy luyện chữ */}
-        <g stroke="#3B2A2C" strokeOpacity="0.09" strokeWidth="1">
+        <g className="stroke-sumi" strokeOpacity="0.09" strokeWidth="1">
           {Array.from({ length: 14 }).map((_, col) => (
             <line key={`v${col}`} x1={40 + col * 28} y1="0" x2={40 + col * 28} y2="1000" />
           ))}
@@ -29,7 +29,7 @@ export default function BackgroundArt() {
         </g>
 
         {/* Vài ô được "tô" như đã điền kanji, rải rác dọc lưới */}
-        <g fill="#3B2A2C" opacity="0.07">
+        <g className="fill-sumi" opacity="0.07">
           <rect x="96" y="140" width="28" height="28" />
           <rect x="180" y="140" width="28" height="28" />
           <rect x="124" y="308" width="28" height="28" />
@@ -42,7 +42,7 @@ export default function BackgroundArt() {
         </g>
 
         {/* Con dấu triện đỏ — điểm nhấn duy nhất về màu trong khối trang trí */}
-        <g transform="translate(300 460)" opacity="0.5">
+        <g transform="translate(300 460)" opacity="0.5" className="stroke-ai fill-ai">
           <rect
             x="-34"
             y="-34"
@@ -50,7 +50,6 @@ export default function BackgroundArt() {
             height="68"
             rx="6"
             fill="none"
-            stroke="#A9575A"
             strokeWidth="3"
             transform="rotate(-6)"
           />
@@ -59,7 +58,6 @@ export default function BackgroundArt() {
             y="10"
             textAnchor="middle"
             fontSize="30"
-            fill="#A9575A"
             transform="rotate(-6)"
             style={{ fontFamily: "serif" }}
           >
@@ -68,7 +66,7 @@ export default function BackgroundArt() {
         </g>
 
         {/* Nét gạch mực mờ, gợi cảm giác đang luyện viết */}
-        <g stroke="#BC8F8F" strokeOpacity="0.14" strokeWidth="2.5" strokeLinecap="round" fill="none">
+        <g className="stroke-ai" strokeOpacity="0.14" strokeWidth="2.5" strokeLinecap="round" fill="none">
           <path d="M96 168 C104 178, 112 178, 120 168" />
           <path d="M180 168 C188 176, 196 176, 204 168" />
           <path d="M152 728 C160 736, 168 736, 176 728" />
