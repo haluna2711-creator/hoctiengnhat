@@ -24,6 +24,7 @@ create table if not exists public.vocab (
   meaning       text not null,
 
   example_jp    text,
+  example_romaji text,
   example_vi    text,
   audio_url     text,
 
@@ -68,3 +69,10 @@ drop policy if exists "Cho phép thêm từ mới" on public.vocab;
 create policy "Cho phép thêm từ mới"
   on public.vocab for insert
   with check (true);
+
+-- ------------------------------------------------------------
+-- Migration: nếu bảng vocab đã tồn tại từ trước (chưa có cột
+-- example_romaji), chạy riêng dòng dưới đây là đủ, không cần chạy lại
+-- toàn bộ file.
+-- ------------------------------------------------------------
+alter table public.vocab add column if not exists example_romaji text;
