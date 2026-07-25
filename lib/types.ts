@@ -36,6 +36,13 @@ export function normalizeTags(tags: string[] | null | undefined): string[] {
   return (tags ?? []).map((t) => t.trim().toLowerCase()).filter(Boolean);
 }
 
+/** Khoá định danh 1 từ vựng theo cặp (kanji, hiragana) — dùng để phát
+ * hiện trùng lặp khi nạp từ mới. Coalesce kanji về "" để khớp đúng
+ * logic unique index ở database (coalesce(kanji, ''), hiragana). */
+export function vocabKey(kanji: string | null | undefined, hiragana: string): string {
+  return `${(kanji ?? "").trim()}|${hiragana.trim()}`;
+}
+
 /** So khớp câu trả lời gõ tay: bỏ khoảng trắng thừa đầu/cuối, coi
  * khoảng trắng liên tiếp là một, không phân biệt hoa/thường (romaji có
  * thể gõ hoa). Hiragana/kanji tiếng Nhật không có khái niệm hoa
