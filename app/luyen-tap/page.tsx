@@ -1,373 +1,376 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { JLPT_LEVELS, type JlptLevel, type Vocab } from "@/lib/types";
 import { fetchVocabForPractice } from "@/lib/vocab";
-import PracticeSession, {
-  type KanjiDirection,
-  type PracticeMode,
-} from "@/components/PracticeSession";
-import FlashcardSession, { type FlashcardReviewMode } from "@/components/FlashcardSession";
-import MatchSession from "@/components/MatchSession";
+import {
+  clearHistory,
+  getDailyAccuracy,
+  getHistory,
+  getModeBreakdown,
+  getOverallStats,
+  MODE_LABELS,
+  type DailyAccuracy,
+  type ModeBreakdown,
+  type OverallStats,
+  type SessionRecord,
+} from "@/lib/history";
+import {
+  getMasteryBreakdown,
+  getTotalReviewedWords,
+  MASTERY_LABELS,
+  type MasteryBreakdown,
+  type MasteryLevel,
+} from "@/lib/srs";
 
-type Stage = "setup" | "loading" | "playing" | "summary";
+type LevelFilter = JlptLevel | "all";
 
-type SessionResult =
-  | { kind: "score"; correct: number; total: number }
-  | { kind: "flashcard"; known: number; total: number }
-  | { kind: "match"; pairs: number; timeMs: number; mistakes: number };
+const MASTERY_ORDER: MasteryLevel[] = ["new", "learning", "young", "mature"];
+const MASTERY_COLOR: Record<MasteryLevel, string> = {
+  new: "bg-line",
+  learning: "bg-beni",
+  young: "bg-kin",
+  mature: "bg-midori",
+};
+const MASTERY_TEXT_COLOR: Record<MasteryLevel, string> = {
+  new: "text-sumi-soft",
+  learning: "text-beni-deep",
+  young: "text-kin",
+  mature: "text-midori-deep",
+};
 
-const QUESTION_COUNT_OPTIONS = [10, 20, 30];
-
-const MODES: { value: PracticeMode; title: string; desc: string; sample: string }[] = [
-  {
-    value: "mc",
-    title: "Trắc nghiệm",
-    desc: "Chọn đáp án đúng trong các lựa chọn.",
-    sample: "A",
-  },
-  {
-    value: "hiragana",
-    title: "Nhập hiragana",
-    desc: "Gõ lại cách đọc của từ.",
-    sample: "あ",
-  },
-  {
-    value: "kanji",
-    title: "Viết kanji",
-    desc: "Gõ lại kanji — chọn chiều xuôi hoặc ngược bên dưới.",
-    sample: "字",
-  },
-  {
-    value: "flashcard",
-    title: "Flashcard",
-    desc: "Lật thẻ xem nghĩa, vuốt để đánh dấu đã thuộc hay chưa.",
-    sample: "捲",
-  },
-  {
-    value: "match",
-    title: "Ghép từ",
-    desc: "Ghép nhanh từ với nghĩa tương ứng, tính giờ và số lần sai.",
-    sample: "合",
-  },
-];
-
-function countLabelFor(mode: PracticeMode): string {
-  if (mode === "flashcard") return "Số thẻ";
-  if (mode === "match") return "Số từ";
-  return "Số câu";
+function formatDateShort(dateStr: string): string {
+  const [, m, d] = dateStr.split("-");
+  return `${d}/${m}`;
 }
 
-function LuyenTapInner() {
-  const searchParams = useSearchParams();
-  const levelFromUrl = searchParams.get("level") as JlptLevel | null;
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  const dateStr = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const timeStr = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${dateStr} · ${timeStr}`;
+}
 
-  const [stage, setStage] = useState<Stage>("setup");
-  const [level, setLevel] = useState<JlptLevel | "all">(levelFromUrl ?? "all");
-  const [mode, setMode] = useState<PracticeMode>("mc");
-  const [kanjiDirection, setKanjiDirection] = useState<KanjiDirection>("xuoi");
-  const [flashcardReviewMode, setFlashcardReviewMode] = useState<FlashcardReviewMode>("due");
-  const [questionCount, setQuestionCount] = useState(10);
-  const [autoAdvance, setAutoAdvance] = useState(false);
-  const [countdownEnabled, setCountdownEnabled] = useState(true);
+export default function DanhGiaPage() {
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
   const [pool, setPool] = useState<Vocab[]>([]);
-  const [result, setResult] = useState<SessionResult | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [sessionKey, setSessionKey] = useState(0);
+  const [poolStatus, setPoolStatus] = useState<"loading" | "ready" | "error">("loading");
 
-  async function handleStart() {
-    setStage("loading");
-    setErrorMsg(null);
+  const [overall, setOverall] = useState<OverallStats | null>(null);
+  const [modeBreakdown, setModeBreakdown] = useState<ModeBreakdown[]>([]);
+  const [daily, setDaily] = useState<DailyAccuracy[]>([]);
+  const [history, setHistory] = useState<SessionRecord[]>([]);
+  const [reviewedWords, setReviewedWords] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Dữ liệu localStorage (không phụ thuộc mạng) — đọc lại mỗi khi
+  // refreshKey đổi (VD: sau khi bấm "Xoá dữ liệu").
+  useEffect(() => {
+    setOverall(getOverallStats());
+    setModeBreakdown(getModeBreakdown());
+    setDaily(getDailyAccuracy(14));
+    setHistory(getHistory());
+    setReviewedWords(getTotalReviewedWords());
+  }, [refreshKey]);
+
+  // Kho từ vựng — chỉ cần để tính phân bố "mức độ thuộc" theo cấp độ
+  // JLPT (dữ liệu SRS chỉ lưu theo id từ, cần join với danh sách từ để
+  // biết từ nào thuộc cấp độ nào).
+  useEffect(() => {
+    let cancelled = false;
+    setPoolStatus("loading");
+    fetchVocabForPractice("all")
+      .then((data) => {
+        if (cancelled) return;
+        setPool(data);
+        setPoolStatus("ready");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPoolStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  const filteredPool = useMemo(
+    () => (levelFilter === "all" ? pool : pool.filter((v) => v.jlpt_level === levelFilter)),
+    [pool, levelFilter]
+  );
+
+  const mastery: MasteryBreakdown = useMemo(
+    () => getMasteryBreakdown(filteredPool),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filteredPool, refreshKey]
+  );
+
+  const filteredHistory = useMemo(
+    () => (levelFilter === "all" ? history : history.filter((r) => r.level === levelFilter)),
+    [history, levelFilter]
+  );
+
+  const hasAnyData = (overall?.totalSessions ?? 0) > 0 || reviewedWords > 0;
+  const maxDailySessions = Math.max(1, ...daily.map((d) => d.sessions));
+
+  function handleClearData() {
+    const ok = window.confirm(
+      "Xoá toàn bộ dữ liệu luyện tập lưu trên trình duyệt này? Bao gồm lịch sử các buổi luyện tập và tiến độ ôn từ (SRS). Không thể hoàn tác."
+    );
+    if (!ok) return;
+    clearHistory();
+    // lib/srs.ts không export riêng hàm xoá — xoá thẳng key nó dùng.
     try {
-      const data = await fetchVocabForPractice(level);
-      setPool(data);
-      if (data.length === 0) {
-        setErrorMsg(
-          "Chưa có từ vựng nào ở cấp độ này. Hãy chọn cấp độ khác hoặc nạp thêm từ vựng trước."
-        );
-        setStage("setup");
-        return;
-      }
-      setSessionKey((k) => k + 1);
-      setStage("playing");
+      window.localStorage.removeItem("htn_srs_v1");
     } catch {
-      setErrorMsg(
-        "Không tải được từ vựng. Kiểm tra lại cấu hình Supabase (NEXT_PUBLIC_SUPABASE_URL / ANON_KEY)."
-      );
-      setStage("setup");
+      // ignore
     }
-  }
-
-  function handleScoreFinish(r: { correct: number; total: number }) {
-    setResult({ kind: "score", ...r });
-    setStage("summary");
-  }
-
-  function handleFlashcardFinish(r: { known: number; total: number }) {
-    setResult({ kind: "flashcard", ...r });
-    setStage("summary");
-  }
-
-  function handleMatchFinish(r: { pairs: number; timeMs: number; mistakes: number }) {
-    setResult({ kind: "match", ...r });
-    setStage("summary");
-  }
-
-  function handleReplay() {
-    setSessionKey((k) => k + 1);
-    setStage("playing");
+    setRefreshKey((k) => k + 1);
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-12">
-      <h1 className="font-display text-3xl text-sumi">Luyện tập</h1>
+    <div className="mx-auto max-w-5xl px-5 py-12">
+      <h1 className="font-display text-3xl text-sumi">Đánh giá</h1>
+      <p className="mt-2 max-w-2xl text-sumi-soft">
+        Thống kê tiến độ học tập — điểm số các lần luyện tập và mức độ
+        thuộc từ vựng. Toàn bộ dữ liệu lưu ngay trên trình duyệt này,
+        không gửi lên máy chủ nào cả.
+      </p>
 
-      {stage === "setup" && (
-        <div className="mt-6 space-y-8">
-          {errorMsg && (
-            <p className="rounded-lg border border-beni/40 bg-beni/5 px-4 py-3 text-sm text-beni-deep">
-              {errorMsg}
-            </p>
-          )}
-
-          <div>
-            <p className="mb-3 text-sm font-semibold text-sumi">Cấp độ</p>
-            <div className="flex flex-wrap gap-2">
-              <Chip active={level === "all"} onClick={() => setLevel("all")}>
-                Tất cả
-              </Chip>
-              {JLPT_LEVELS.map((lvl) => (
-                <Chip key={lvl.value} active={level === lvl.value} onClick={() => setLevel(lvl.value)}>
-                  {lvl.label}
-                </Chip>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-3 text-sm font-semibold text-sumi">Chế độ luyện tập</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {MODES.map((m) => (
-                <button
-                  key={m.value}
-                  type="button"
-                  onClick={() => setMode(m.value)}
-                  className={`rounded-xl2 border p-4 text-left transition ${
-                    mode === m.value
-                      ? "border-ai bg-ai/5"
-                      : "border-line hover:border-ai/50"
-                  }`}
-                >
-                  <span className="kanji-cell flex h-10 w-10 items-center justify-center rounded-sm font-jp text-lg text-ai">
-                    {m.sample}
-                  </span>
-                  <p className="mt-2 font-display text-base text-sumi">{m.title}</p>
-                  <p className="mt-1 text-xs text-sumi-soft">{m.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {mode === "kanji" && (
-            <div>
-              <p className="mb-3 text-sm font-semibold text-sumi">Chiều luyện viết kanji</p>
-              <div className="flex flex-wrap gap-2">
-                <Chip active={kanjiDirection === "xuoi"} onClick={() => setKanjiDirection("xuoi")}>
-                  Xuôi — có gợi ý cách đọc
-                </Chip>
-                <Chip active={kanjiDirection === "nguoc"} onClick={() => setKanjiDirection("nguoc")}>
-                  Ngược — chỉ có nghĩa
-                </Chip>
-              </div>
-            </div>
-          )}
-
-          {mode === "flashcard" && (
-            <div>
-              <p className="mb-3 text-sm font-semibold text-sumi">Chế độ ôn tập</p>
-              <div className="flex flex-wrap gap-2">
-                <Chip
-                  active={flashcardReviewMode === "due"}
-                  onClick={() => setFlashcardReviewMode("due")}
-                >
-                  Đến hạn hôm nay (kiểu Anki)
-                </Chip>
-                <Chip
-                  active={flashcardReviewMode === "all"}
-                  onClick={() => setFlashcardReviewMode("all")}
-                >
-                  Học tất cả
-                </Chip>
-              </div>
-              <p className="mt-2 text-xs text-sumi-soft">
-                "Đến hạn hôm nay" chỉ lấy thẻ mới hoặc thẻ đã tới ngày ôn lại theo lịch ghi nhớ
-                giãn cách. Sau khi lật thẻ, vuốt phải (hoặc bấm "Đã thuộc") khi nhớ được, vuốt trái
-                (hoặc bấm "Chưa thuộc") khi chưa nhớ — hệ thống tự tính lịch ôn tiếp theo, giống
-                Anki.
-              </p>
-            </div>
-          )}
-
-          {mode !== "flashcard" && (
-            <div>
-              <p className="mb-3 text-sm font-semibold text-sumi">Kiểm tra (đếm ngược 20 giây)</p>
-              <div className="flex flex-wrap gap-2">
-                <Chip active={countdownEnabled} onClick={() => setCountdownEnabled(true)}>
-                  Bật — giới hạn 20 giây
-                </Chip>
-                <Chip active={!countdownEnabled} onClick={() => setCountdownEnabled(false)}>
-                  Tắt — không giới hạn giờ
-                </Chip>
-              </div>
-              <p className="mt-2 text-xs text-sumi-soft">
-                {mode === "match"
-                  ? "Mỗi vòng có 20 giây cho mỗi cặp từ. Hết giờ mà chưa ghép xong, các cặp còn lại sẽ tự tính là sai và chuyển sang vòng tiếp theo."
-                  : "Mỗi câu có 20 giây để trả lời. Hết giờ mà chưa chọn đáp án sẽ tự động tính là sai và chuyển sang câu tiếp theo."}
-              </p>
-            </div>
-          )}
-
-          {(mode === "mc" || mode === "hiragana" || mode === "kanji") && (
-            <div>
-              <p className="mb-3 text-sm font-semibold text-sumi">Tự động chuyển câu</p>
-              <div className="flex flex-wrap gap-2">
-                <Chip active={autoAdvance} onClick={() => setAutoAdvance(true)}>
-                  Bật — tự chuyển sau khi trả lời
-                </Chip>
-                <Chip active={!autoAdvance} onClick={() => setAutoAdvance(false)}>
-                  Tắt — tự bấm "Câu tiếp theo"
-                </Chip>
-              </div>
-              <p className="mt-2 text-xs text-sumi-soft">
-                Sau khi có kết quả (đúng/sai/hết giờ), tự động sang câu tiếp theo mà không cần bấm nút.
-              </p>
-            </div>
-          )}
-
-          <div>
-            <p className="mb-3 text-sm font-semibold text-sumi">{countLabelFor(mode)}</p>
-            <div className="flex flex-wrap gap-2">
-              {QUESTION_COUNT_OPTIONS.map((n) => (
-                <Chip key={n} active={questionCount === n} onClick={() => setQuestionCount(n)}>
-                  {n}
-                </Chip>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleStart}
-            className="rounded-full bg-ai px-6 py-3 text-sm font-semibold text-washi shadow-card transition hover:bg-ai-deep"
+      {!hasAnyData && poolStatus !== "loading" && (
+        <div className="mt-8 rounded-xl2 border border-line/70 bg-washi-deep/60 p-8 text-center">
+          <p className="text-sumi-soft">
+            Chưa có dữ liệu luyện tập nào trên trình duyệt này. Hãy bắt đầu một buổi luyện tập để
+            thấy thống kê ở đây.
+          </p>
+          <Link
+            href="/luyen-tap"
+            className="mt-5 inline-block rounded-full bg-ai px-6 py-3 text-sm font-semibold text-washi shadow-card transition hover:bg-ai-deep"
           >
-            Bắt đầu
-          </button>
+            Bắt đầu luyện tập
+          </Link>
         </div>
       )}
 
-      {stage === "loading" && <p className="mt-8 text-sumi-soft">Đang tải từ vựng...</p>}
-
-      {stage === "playing" && (
-        <div className="mt-6">
-          {(mode === "mc" || mode === "hiragana" || mode === "kanji") && (
-            <PracticeSession
-              key={sessionKey}
-              pool={pool}
-              mode={mode}
-              kanjiDirection={kanjiDirection}
-              questionCount={questionCount}
-              autoAdvance={autoAdvance}
-              countdownEnabled={countdownEnabled}
-              onFinish={handleScoreFinish}
-            />
-          )}
-          {mode === "flashcard" && (
-            <FlashcardSession
-              key={sessionKey}
-              pool={pool}
-              reviewMode={flashcardReviewMode}
-              questionCount={questionCount}
-              onFinish={handleFlashcardFinish}
-            />
-          )}
-          {mode === "match" && (
-            <MatchSession
-              key={sessionKey}
-              pool={pool}
-              questionCount={questionCount}
-              countdownEnabled={countdownEnabled}
-              onFinish={handleMatchFinish}
-            />
-          )}
-        </div>
-      )}
-
-      {stage === "summary" && result && (
-        <div className="mt-8 rounded-xl2 border border-line/70 bg-washi/70 p-8 text-center shadow-card">
-          {result.kind === "score" && (
-            <>
-              <span className="hanko-mark mx-auto flex h-16 w-16 items-center justify-center font-jp text-2xl">
-                {result.correct === result.total ? "満点" : "終"}
-              </span>
-              <p className="mt-4 font-display text-2xl text-sumi">
-                {result.correct} / {result.total} câu đúng
-              </p>
-              <p className="mt-1 text-sumi-soft">
-                {Math.round((result.correct / result.total) * 100)}% chính xác
-              </p>
-            </>
-          )}
-
-          {result.kind === "flashcard" && (
-            <>
-              <span className="hanko-mark mx-auto flex h-16 w-16 items-center justify-center font-jp text-2xl">
-                終
-              </span>
-              <p className="mt-4 font-display text-2xl text-sumi">
-                Đã thuộc {result.known} / {result.total} thẻ
-              </p>
-              <p className="mt-1 text-sumi-soft">
-                {Math.round((result.known / result.total) * 100)}% số thẻ bạn đánh dấu đã thuộc —
-                lịch ôn tiếp theo đã được cập nhật.
-              </p>
-            </>
-          )}
-
-          {result.kind === "match" && (
-            <>
-              <span className="hanko-mark mx-auto flex h-16 w-16 items-center justify-center font-jp text-2xl">
-                合
-              </span>
-              <p className="mt-4 font-display text-2xl text-sumi">
-                Ghép xong {result.pairs} cặp từ
-              </p>
-              <p className="mt-1 text-sumi-soft">
-                Thời gian {Math.floor(result.timeMs / 60000)}:
-                {String(Math.floor((result.timeMs % 60000) / 1000)).padStart(2, "0")} · Sai{" "}
-                {result.mistakes} lần
-              </p>
-            </>
-          )}
-
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={handleReplay}
-              className="rounded-full bg-ai px-5 py-2.5 text-sm font-semibold text-washi transition hover:bg-ai-deep"
-            >
-              Luyện lại (cùng cài đặt)
-            </button>
-            <button
-              type="button"
-              onClick={() => setStage("setup")}
-              className="rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-sumi transition hover:border-ai hover:text-ai"
-            >
-              Đổi cài đặt
-            </button>
+      {hasAnyData && (
+        <>
+          {/* Bộ lọc cấp độ */}
+          <div className="mt-8 flex flex-wrap gap-2">
+            <Chip active={levelFilter === "all"} onClick={() => setLevelFilter("all")}>
+              Tất cả
+            </Chip>
+            {JLPT_LEVELS.map((lvl) => (
+              <Chip
+                key={lvl.value}
+                active={levelFilter === lvl.value}
+                onClick={() => setLevelFilter(lvl.value)}
+              >
+                {lvl.label}
+              </Chip>
+            ))}
           </div>
-        </div>
+
+          {/* Tổng quan */}
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard
+              label="Buổi luyện tập"
+              value={String(filteredHistory.length)}
+              hint="tổng số lần hoàn thành"
+            />
+            <StatCard
+              label="Độ chính xác TB"
+              value={`${computeAccuracy(filteredHistory)}%`}
+              hint="trên toàn bộ câu/thẻ"
+            />
+            <StatCard
+              label="Chuỗi ngày liên tiếp"
+              value={String(overall?.streakDays ?? 0)}
+              hint="ngày có luyện tập"
+            />
+            <StatCard
+              label="Từ đã từng ôn"
+              value={String(reviewedWords)}
+              hint="qua chế độ Flashcard"
+            />
+          </div>
+
+          {/* Mức độ thuộc từ */}
+          <section className="mt-10">
+            <h2 className="font-display text-xl text-sumi">Mức độ thuộc từ vựng</h2>
+            <p className="mt-1 text-sm text-sumi-soft">
+              Dựa trên tiến độ ôn giãn cách (SRS) của chế độ Flashcard
+              {levelFilter !== "all" ? ` — cấp độ ${levelFilter.toUpperCase()}` : ""}.
+            </p>
+
+            {poolStatus === "error" && (
+              <p className="mt-3 rounded-lg border border-beni/40 bg-beni/5 px-4 py-3 text-sm text-beni-deep">
+                Không tải được danh sách từ vựng để đối chiếu (kiểm tra cấu hình Supabase). Các
+                thống kê buổi luyện tập bên dưới vẫn hiển thị bình thường.
+              </p>
+            )}
+
+            {poolStatus === "ready" && mastery.total === 0 ? (
+              <p className="mt-3 text-sm text-sumi-soft">Chưa có từ vựng nào ở cấp độ này.</p>
+            ) : (
+              poolStatus === "ready" && (
+                <div className="mt-4">
+                  <div className="flex h-6 w-full overflow-hidden rounded-full border border-line/70">
+                    {MASTERY_ORDER.map((level) => {
+                      const count = mastery[level];
+                      if (count === 0) return null;
+                      const pct = (count / mastery.total) * 100;
+                      return (
+                        <div
+                          key={level}
+                          className={MASTERY_COLOR[level]}
+                          style={{ width: `${pct}%` }}
+                          title={`${MASTERY_LABELS[level]}: ${count}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                    {MASTERY_ORDER.map((level) => (
+                      <div key={level} className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${MASTERY_COLOR[level]}`} />
+                        <span className="text-sumi-soft">{MASTERY_LABELS[level]}</span>
+                        <span className={`font-semibold ${MASTERY_TEXT_COLOR[level]}`}>
+                          {mastery[level]}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
+          </section>
+
+          {/* Xu hướng 14 ngày gần nhất */}
+          <section className="mt-10">
+            <h2 className="font-display text-xl text-sumi">14 ngày gần nhất</h2>
+            <p className="mt-1 text-sm text-sumi-soft">Số buổi luyện tập mỗi ngày.</p>
+            <div className="mt-4 flex items-end gap-1.5 sm:gap-2">
+              {daily.map((d) => {
+                const heightPct = Math.max(6, (d.sessions / maxDailySessions) * 100);
+                return (
+                  <div key={d.dateStr} className="flex flex-1 flex-col items-center gap-1.5">
+                    <div className="flex h-24 w-full items-end">
+                      <div
+                        className={`w-full rounded-t-md ${
+                          d.sessions > 0 ? "bg-ai" : "bg-line"
+                        }`}
+                        style={{ height: `${d.sessions > 0 ? heightPct : 4}%` }}
+                        title={
+                          d.sessions > 0
+                            ? `${d.sessions} buổi · ${d.avgAccuracyPct}% chính xác`
+                            : "Không luyện tập"
+                        }
+                      />
+                    </div>
+                    <span className="text-[10px] text-sumi-soft">{formatDateShort(d.dateStr)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Theo chế độ luyện tập */}
+          {modeBreakdown.length > 0 && (
+            <section className="mt-10">
+              <h2 className="font-display text-xl text-sumi">Theo chế độ luyện tập</h2>
+              <div className="mt-4 space-y-3">
+                {modeBreakdown.map((m) => (
+                  <div key={m.mode}>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-sumi">{MODE_LABELS[m.mode]}</span>
+                      <span className="text-sumi-soft">
+                        {m.sessions} buổi · {m.avgAccuracyPct}% chính xác
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-washi-deep">
+                      <div
+                        className="h-full rounded-full bg-ai"
+                        style={{ width: `${m.avgAccuracyPct}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Lịch sử gần đây */}
+          <section className="mt-10">
+            <h2 className="font-display text-xl text-sumi">Lịch sử gần đây</h2>
+            <div className="mt-4 overflow-hidden rounded-xl2 border border-line/70">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-washi-deep/70 text-sumi-soft">
+                  <tr>
+                    <th className="px-4 py-2.5 font-medium">Thời gian</th>
+                    <th className="px-4 py-2.5 font-medium">Chế độ</th>
+                    <th className="px-4 py-2.5 font-medium">Cấp độ</th>
+                    <th className="px-4 py-2.5 text-right font-medium">Kết quả</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredHistory.slice(0, 20).map((r) => (
+                    <tr key={r.id} className="border-t border-line/60">
+                      <td className="px-4 py-2.5 text-sumi-soft">{formatDateTime(r.timestamp)}</td>
+                      <td className="px-4 py-2.5 text-sumi">{MODE_LABELS[r.mode]}</td>
+                      <td className="px-4 py-2.5 text-sumi-soft">
+                        {r.level === "all" ? "Tất cả" : r.level.toUpperCase()}
+                      </td>
+                      <td className="px-4 py-2.5 text-right text-sumi">
+                        {r.correct}/{r.total}{" "}
+                        <span className="text-sumi-soft">({r.accuracyPct}%)</span>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredHistory.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-6 text-center text-sumi-soft">
+                        Chưa có buổi luyện tập nào ở cấp độ này.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Xoá dữ liệu */}
+          <section className="mt-12 rounded-xl2 border border-beni/30 bg-beni/5 p-5">
+            <p className="text-sm font-semibold text-beni-deep">Xoá dữ liệu cục bộ</p>
+            <p className="mt-1 text-sm text-sumi-soft">
+              Xoá toàn bộ lịch sử luyện tập và tiến độ ôn từ đã lưu trên trình duyệt này.
+            </p>
+            <button
+              type="button"
+              onClick={handleClearData}
+              className="mt-3 rounded-full border border-beni px-5 py-2 text-sm font-semibold text-beni-deep transition hover:bg-beni hover:text-washi"
+            >
+              Xoá toàn bộ dữ liệu
+            </button>
+          </section>
+        </>
       )}
+    </div>
+  );
+}
+
+function computeAccuracy(rows: SessionRecord[]): number {
+  const totalItems = rows.reduce((sum, r) => sum + r.total, 0);
+  const totalCorrect = rows.reduce((sum, r) => sum + r.correct, 0);
+  return totalItems > 0 ? Math.round((totalCorrect / totalItems) * 100) : 0;
+}
+
+function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="rounded-xl2 border border-line/70 bg-washi/70 p-4 shadow-card">
+      <p className="text-xs font-medium uppercase tracking-wide text-sumi-soft">{label}</p>
+      <p className="mt-1 font-display text-2xl text-sumi">{value}</p>
+      <p className="mt-0.5 text-xs text-sumi-soft">{hint}</p>
     </div>
   );
 }
@@ -386,22 +389,10 @@ function Chip({
       type="button"
       onClick={onClick}
       className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-        active
-          ? "border-ai bg-ai text-washi"
-          : "border-line text-sumi-soft hover:border-ai hover:text-ai"
+        active ? "border-ai bg-ai text-washi" : "border-line text-sumi-soft hover:border-ai hover:text-ai"
       }`}
     >
       {children}
     </button>
-  );
-}
-
-export default function LuyenTapPage() {
-  return (
-    <Suspense
-      fallback={<div className="mx-auto max-w-3xl px-5 py-12 text-sumi-soft">Đang tải...</div>}
-    >
-      <LuyenTapInner />
-    </Suspense>
   );
 }
