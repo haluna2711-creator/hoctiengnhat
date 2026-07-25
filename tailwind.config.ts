@@ -23,6 +23,8 @@ const config: Config = {
         "ai-soft": "rgb(var(--color-ai-soft) / <alpha-value>)",
         beni: "rgb(var(--color-beni) / <alpha-value>)",
         "beni-deep": "rgb(var(--color-beni-deep) / <alpha-value>)",
+        midori: "rgb(var(--color-midori) / <alpha-value>)",
+        "midori-deep": "rgb(var(--color-midori-deep) / <alpha-value>)",
         kin: "rgb(var(--color-kin) / <alpha-value>)",
         line: "rgb(var(--color-line) / <alpha-value>)",
       },
