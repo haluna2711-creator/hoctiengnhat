@@ -1,176 +1,133 @@
-"use client";
+import { supabase } from "@/lib/supabase";
+import type { JlptLevel, Vocab, VocabDraft } from "@/lib/types";
+import { vocabKey } from "@/lib/types";
 
-import { useEffect, useRef, useState } from "react";
-import { JLPT_LEVELS, type JlptLevel, type Vocab } from "@/lib/types";
-import { fetchVocabList } from "@/lib/vocab";
-import VocabCard from "@/components/VocabCard";
+const SELECT_COLUMNS =
+  "id, kanji, hiragana, romaji, meaning, example_jp, example_romaji, example_vi, audio_url, jlpt_level, tags, created_at";
 
-const PAGE_SIZE = 60;
-
-export default function VocabListPage() {
-  const [level, setLevel] = useState<JlptLevel | "all">("all");
-  const [search, setSearch] = useState("");
-  const [vocab, setVocab] = useState<Vocab[]>([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const isFirstRun = useRef(true);
-
-  // Đổi filter (cấp độ/tìm kiếm) -> luôn tải lại từ trang đầu tiên.
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setErrorMsg(null);
-
-    // Lần tải đầu tiên khi vào trang không cần debounce — chỉ debounce
-    // khi người dùng đang gõ tìm kiếm, để trang hiện dữ liệu ngay từ
-    // lượt đầu thay vì luôn phải chờ thêm 250ms vô ích.
-    const delay = isFirstRun.current ? 0 : 250;
-    isFirstRun.current = false;
-
-    const timeout = setTimeout(() => {
-      fetchVocabList({ level, search, limit: PAGE_SIZE, offset: 0 })
-        .then((page) => {
-          if (cancelled) return;
-          setVocab(page.rows);
-          setHasMore(page.hasMore);
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setErrorMsg(
-              "Không tải được từ vựng. Kiểm tra lại cấu hình Supabase (NEXT_PUBLIC_SUPABASE_URL / ANON_KEY)."
-            );
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    }, delay);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
-  }, [level, search]);
-
-  async function handleLoadMore() {
-    setLoadingMore(true);
-    try {
-      const page = await fetchVocabList({
-        level,
-        search,
-        limit: PAGE_SIZE,
-        offset: vocab.length,
-      });
-      setVocab((prev) => [...prev, ...page.rows]);
-      setHasMore(page.hasMore);
-    } catch {
-      setErrorMsg("Không tải thêm được — thử lại sau.");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
-
-  return (
-    <div className="mx-auto max-w-6xl px-5 py-12">
-      <h1 className="font-display text-3xl text-sumi">Sổ từ vựng</h1>
-      <p className="mt-2 text-sumi-soft">
-        Tra cứu, lọc theo cấp độ JLPT hoặc tìm theo kanji, cách đọc,
-        romaji, nghĩa.
-      </p>
-
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm theo kanji, hiragana, romaji hoặc nghĩa..."
-          className="input sm:max-w-sm"
-        />
-        <div className="flex flex-wrap gap-2">
-          <FilterChip active={level === "all"} onClick={() => setLevel("all")}>
-            Tất cả
-          </FilterChip>
-          {JLPT_LEVELS.map((lvl) => (
-            <FilterChip
-              key={lvl.value}
-              active={level === lvl.value}
-              onClick={() => setLevel(lvl.value)}
-            >
-              {lvl.label}
-            </FilterChip>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        {errorMsg && (
-          <p className="rounded-lg border border-beni/40 bg-beni/5 px-4 py-3 text-sm text-beni-deep">
-            {errorMsg}
-          </p>
-        )}
-
-        {!errorMsg && loading && (
-          <p className="text-sumi-soft">Đang tải...</p>
-        )}
-
-        {!errorMsg && !loading && vocab.length === 0 && (
-          <p className="text-sumi-soft">
-            Chưa có từ nào khớp. Thử bỏ bớt bộ lọc, hoặc{" "}
-            <a href="/nap-tu-vung" className="text-ai underline">
-              nạp thêm từ vựng
-            </a>
-            .
-          </p>
-        )}
-
-        {!errorMsg && !loading && vocab.length > 0 && (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {vocab.map((v) => (
-                <VocabCard key={v.id} vocab={v} />
-              ))}
-            </div>
-            {hasMore && (
-              <div className="mt-8 flex justify-center">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="rounded-full border border-line px-6 py-2.5 text-sm font-semibold text-sumi transition hover:border-ai hover:text-ai disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {loadingMore ? "Đang tải..." : "Tải thêm"}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
+export interface VocabFilter {
+  level?: JlptLevel | "all";
+  search?: string;
+  /** Số dòng tối đa lấy về (mặc định 60). Trang "Sổ từ vựng" dùng để
+   * phân trang kiểu "tải thêm" thay vì tải cả kho từ một lần — quan
+   * trọng khi kho từ lên tới vài trăm/nghìn từ, nhất là trên mobile. */
+  limit?: number;
+  /** Vị trí bắt đầu lấy (dùng cho "tải thêm"). */
+  offset?: number;
 }
 
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-        active
-          ? "border-ai bg-ai text-washi"
-          : "border-line text-sumi-soft hover:border-ai hover:text-ai"
-      }`}
-    >
-      {children}
-    </button>
+export interface VocabPage {
+  rows: Vocab[];
+  /** true nếu còn dữ liệu phía sau chưa lấy (còn để bấm "Tải thêm"). */
+  hasMore: boolean;
+}
+
+const DEFAULT_PAGE_SIZE = 60;
+
+/** Lấy danh sách từ vựng theo trang, có thể lọc theo cấp độ JLPT và từ
+ * khoá tìm kiếm (khớp trên kanji, hiragana, romaji hoặc nghĩa). */
+export async function fetchVocabList(filter: VocabFilter = {}): Promise<VocabPage> {
+  const limit = filter.limit ?? DEFAULT_PAGE_SIZE;
+  const offset = filter.offset ?? 0;
+
+  let query = supabase
+    .from("vocab")
+    .select(SELECT_COLUMNS)
+    .order("created_at", { ascending: false });
+
+  if (filter.level && filter.level !== "all") {
+    query = query.eq("jlpt_level", filter.level);
+  }
+
+  if (filter.search && filter.search.trim()) {
+    const term = filter.search.trim();
+    query = query.or(
+      `kanji.ilike.%${term}%,hiragana.ilike.%${term}%,romaji.ilike.%${term}%,meaning.ilike.%${term}%`
+    );
+  }
+
+  // Lấy dư 1 dòng để biết còn "tải thêm" được nữa hay không, mà không
+  // cần thêm 1 query đếm riêng (đỡ round-trip tới Supabase).
+  query = query.range(offset, offset + limit);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  const rows = (data ?? []) as Vocab[];
+  const hasMore = rows.length > limit;
+  return { rows: hasMore ? rows.slice(0, limit) : rows, hasMore };
+}
+
+/** Lấy toàn bộ từ vựng của 1 (hoặc nhiều) cấp độ để luyện tập — dùng
+ * cho cả bốc câu hỏi lẫn chọn đáp án nhiễu. */
+export async function fetchVocabForPractice(level: JlptLevel | "all"): Promise<Vocab[]> {
+  let query = supabase.from("vocab").select(SELECT_COLUMNS);
+  if (level !== "all") {
+    query = query.eq("jlpt_level", level);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as Vocab[];
+}
+
+export async function countVocabByLevel(): Promise<Record<string, number>> {
+  // Trước đây hàm này SELECT cột jlpt_level của MỌI dòng trong bảng rồi
+  // đếm bằng JS — càng nhiều từ vựng, trang chủ càng chậm vì phải tải
+  // hết dữ liệu chỉ để đếm. Đổi sang 6 query "head-count" (Supabase chỉ
+  // trả về con số, không tải nội dung dòng nào), chạy song song.
+  const levels: JlptLevel[] = ["n5", "n4", "n3", "n2", "n1", "khac"];
+
+  const results = await Promise.all(
+    levels.map((lvl) =>
+      supabase
+        .from("vocab")
+        .select("id", { count: "exact", head: true })
+        .eq("jlpt_level", lvl)
+    )
   );
+
+  const counts: Record<string, number> = {};
+  results.forEach((res, i) => {
+    if (res.error) throw res.error;
+    counts[levels[i]] = res.count ?? 0;
+  });
+  return counts;
+}
+
+/** Kiểm tra xem những từ sắp nạp đã tồn tại sẵn trong kho hay chưa.
+ * Chỉ truy vấn theo cột "hiragana" (có index) rồi so khớp chính xác
+ * theo cặp (kanji, hiragana) ở phía client — vừa nhanh vừa không cần
+ * tải cả bảng vocab về. Trả về tập hợp các "vocabKey" đã tồn tại. */
+export async function findExistingVocabKeys(
+  drafts: Pick<VocabDraft, "kanji" | "hiragana">[]
+): Promise<Set<string>> {
+  const hiraganaList = Array.from(
+    new Set(drafts.map((d) => d.hiragana.trim()).filter(Boolean))
+  );
+  if (hiraganaList.length === 0) return new Set();
+
+  const existing = new Set<string>();
+  const CHUNK_SIZE = 200; // tránh câu query "in (...)" quá dài
+  for (let i = 0; i < hiraganaList.length; i += CHUNK_SIZE) {
+    const chunk = hiraganaList.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("vocab")
+      .select("kanji, hiragana")
+      .in("hiragana", chunk);
+    if (error) throw error;
+    for (const row of data ?? []) {
+      existing.add(vocabKey(row.kanji, row.hiragana));
+    }
+  }
+  return existing;
+}
+
+/** Thêm nhiều từ cùng lúc (dùng cho trang "Nạp từ vựng"). Supabase
+ * giới hạn payload hợp lý nên chia nhỏ theo lô 200 dòng/lần. */
+export async function insertVocabBatch(drafts: VocabDraft[]): Promise<void> {
+  const BATCH_SIZE = 200;
+  for (let i = 0; i < drafts.length; i += BATCH_SIZE) {
+    const batch = drafts.slice(i, i + BATCH_SIZE);
+    const { error } = await supabase.from("vocab").insert(batch);
+    if (error) throw error;
+  }
 }
