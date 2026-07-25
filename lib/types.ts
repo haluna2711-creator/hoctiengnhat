@@ -16,6 +16,7 @@ export interface Vocab {
   romaji: string | null;
   meaning: string;
   example_jp: string | null;
+  example_romaji: string | null;
   example_vi: string | null;
   audio_url: string | null;
   jlpt_level: JlptLevel;
