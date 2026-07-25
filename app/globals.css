@@ -7,13 +7,13 @@ html {
 }
 
 body {
-  background-color: #f2ecdd;
-  color: #25221d;
+  background-color: #fff5ee;
+  color: #3b2a2c;
 }
 
 ::selection {
-  background: #2b4c6e;
-  color: #f2ecdd;
+  background: #bc8f8f;
+  color: #fff5ee;
 }
 
 /* Visible keyboard focus everywhere */
@@ -22,7 +22,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #a93b32;
+  outline: 2px solid #a9575a;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -48,8 +48,8 @@ textarea:focus-visible {
  * gợi ý chất liệu chứ không cạnh tranh với nội dung. */
 .texture-grid {
   background-image:
-    linear-gradient(rgba(37, 34, 29, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 34, 29, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(59, 42, 44, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 42, 44, 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -59,15 +59,15 @@ textarea:focus-visible {
  * nghiệm đều dùng chung khối này. */
 .kanji-cell {
   position: relative;
-  border: 1.5px solid rgba(37, 34, 29, 0.35);
-  background-color: rgba(242, 236, 221, 0.5);
+  border: 1.5px solid rgba(59, 42, 44, 0.35);
+  background-color: rgba(255, 245, 238, 0.6);
 }
 
 .kanji-cell::before,
 .kanji-cell::after {
   content: "";
   position: absolute;
-  background: rgba(37, 34, 29, 0.18);
+  background: rgba(59, 42, 44, 0.18);
 }
 
 /* vạch giữa chiều ngang */
@@ -94,8 +94,8 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #a93b32;
-  color: #a93b32;
+  border: 2px solid #a9575a;
+  color: #a9575a;
   border-radius: 6px;
   transform: rotate(-4deg);
 }
@@ -107,7 +107,7 @@ input[type="search"]::-webkit-search-cancel-button {
   width: 16px;
   margin-left: 6px;
   cursor: pointer;
-  background-color: #2b4c6e;
+  background-color: #bc8f8f;
   -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg>");
   mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg>");
   -webkit-mask-repeat: no-repeat;
@@ -126,5 +126,5 @@ input[type="search"]::-webkit-search-cancel-button:hover {
 }
 
 input[type="search"] {
-  caret-color: #a93b32;
+  caret-color: #a9575a;
 }
