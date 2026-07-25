@@ -149,3 +149,52 @@ export function filterDuePool<T extends { id: string }>(pool: T[]): T[] {
   const today = todayStr();
   return pool.filter((v) => isDue(v.id, today));
 }
+
+/**
+ * Mức độ thuộc từ, suy ra từ trạng thái SRS — dùng cho trang "Đánh
+ * giá" để vẽ biểu đồ phân bố mức độ thuộc trên toàn kho từ:
+ *  - new: chưa ôn lần nào.
+ *  - learning: đã ôn nhưng lần gần nhất là "chưa thuộc" (repetitions = 0).
+ *  - young: đang nhớ tốt nhưng khoảng ôn còn ngắn (< 21 ngày).
+ *  - mature: khoảng ôn đã dài (>= 21 ngày) — coi như đã thuộc chắc.
+ */
+export type MasteryLevel = "new" | "learning" | "young" | "mature";
+
+const MATURE_INTERVAL_DAYS = 21;
+
+export function classifyMastery(state: SrsCardState | null): MasteryLevel {
+  if (!state) return "new";
+  if (state.repetitions === 0) return "learning";
+  return state.intervalDays >= MATURE_INTERVAL_DAYS ? "mature" : "young";
+}
+
+export interface MasteryBreakdown {
+  new: number;
+  learning: number;
+  young: number;
+  mature: number;
+  total: number;
+}
+
+/** Phân bố mức độ thuộc trên 1 kho từ (VD: toàn bộ từ vựng hoặc từ
+ * vựng theo 1 cấp độ JLPT). */
+export function getMasteryBreakdown(pool: { id: string }[]): MasteryBreakdown {
+  const breakdown: MasteryBreakdown = { new: 0, learning: 0, young: 0, mature: 0, total: pool.length };
+  for (const v of pool) {
+    breakdown[classifyMastery(getCardState(v.id))] += 1;
+  }
+  return breakdown;
+}
+
+/** Tổng số từ đã từng được ôn ít nhất 1 lần (có mặt trong kho SRS lưu
+ * ở localStorage), không phụ thuộc vào 1 pool cụ thể nào. */
+export function getTotalReviewedWords(): number {
+  return Object.keys(loadStore()).length;
+}
+
+export const MASTERY_LABELS: Record<MasteryLevel, string> = {
+  new: "Chưa học",
+  learning: "Đang học",
+  young: "Sắp thuộc",
+  mature: "Đã thuộc",
+};
