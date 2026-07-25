@@ -10,9 +10,7 @@ export default function Footer() {
           <div>
             <p className="font-jp text-2xl text-beni">語彙帳</p>
             <p className="mt-2 max-w-sm text-sumi-soft/90">
-              Nơi luyện từ vựng tiếng Nhật theo cấp độ JLPT — trắc nghiệm,
-              nhập hiragana, viết kanji hai chiều, và nạp từ mới thật
-              nhanh bằng cách dán danh sách có sẵn.
+              Nơi luyện từ vựng tiếng Nhật theo cấp độ JLPT miễn phí theo nhiều phương pháp.
             </p>
           </div>
           <div className="text-sumi-soft/80">
