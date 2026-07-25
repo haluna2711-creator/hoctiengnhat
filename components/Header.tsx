@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/", label: "Trang chủ" },
   { href: "/tu-vung", label: "Sổ từ vựng" },
   { href: "/luyen-tap", label: "Luyện tập" },
+  { href: "/danh-gia", label: "Đánh giá" },
   { href: "/nap-tu-vung", label: "Nạp từ vựng" },
 ];
 
