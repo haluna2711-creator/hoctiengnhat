@@ -1,6 +1,7 @@
 import type { Vocab } from "@/lib/types";
 import { headword } from "@/lib/types";
 import SpeakerButton from "@/components/SpeakerButton";
+import ReportErrorButton from "@/components/ReportErrorButton";
 
 const LEVEL_LABEL: Record<string, string> = {
   n5: "N5",
@@ -31,7 +32,7 @@ export default function VocabCard({ vocab }: { vocab: Vocab }) {
           : "h-11 w-11 text-2xl sm:h-12 sm:w-12 sm:text-3xl";
 
   return (
-    <div className="rounded-xl2 border border-line/70 bg-washi/70 p-5 shadow-card transition hover:border-ai/50 hover:shadow-soft">
+    <div className="relative rounded-xl2 border border-line/70 bg-washi/70 p-5 pb-11 shadow-card transition hover:border-ai/50 hover:shadow-soft">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {showFurigana && (
@@ -87,6 +88,10 @@ export default function VocabCard({ vocab }: { vocab: Vocab }) {
           ))}
         </div>
       )}
+
+      <div className="absolute bottom-3 right-3">
+        <ReportErrorButton vocab={vocab} />
+      </div>
     </div>
   );
 }
