@@ -2,18 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+ * Bảng màu — Old Lace / Cordovan
+ * Light: nền kem Old Lace, chữ nâu đậm, điểm nhấn Cordovan (đỏ mận).
+ * Dark: nền mận đen ấm, chữ kem Old Lace, điểm nhấn Cordovan sáng hơn
+ * để đủ tương phản trên nền tối.
+ * Giá trị viết dạng "R G B" (cách nhau bởi khoảng trắng, không dấu
+ * phẩy) để Tailwind ghép được với modifier độ mờ, VD: bg-ai/10.
+ * ============================================================ */
+:root {
+  color-scheme: light;
+
+  --color-washi: 255 246 231; /* Old Lace #FFF6E7 — nền chính */
+  --color-washi-deep: 245 231 206; /* kem đậm hơn — khối nền phụ/card */
+  --color-sumi: 43 22 27; /* #2B161B — chữ chính, nâu mận gần đen */
+  --color-sumi-soft: 138 100 103; /* #8A6467 — chữ phụ */
+
+  --color-ai: 140 47 57; /* Cordovan #8C2F39 — điểm nhấn chính (nút, link) */
+  --color-ai-deep: 110 37 45; /* #6E252D — hover/nhấn đậm hơn */
+  --color-ai-soft: 201 138 147; /* #C98A93 — sắc nhạt của Cordovan */
+
+  --color-beni: 169 87 90; /* đỏ đất — dùng cho đúng/cảnh báo, tách biệt với Cordovan */
+  --color-beni-deep: 131 63 66;
+  --color-kin: 176 138 91; /* vàng ấm — nhãn cấp độ JLPT */
+  --color-line: 232 210 184; /* viền */
+}
+
+.dark {
+  color-scheme: dark;
+
+  --color-washi: 32 17 21; /* #201115 — nền chính, mận đen ấm */
+  --color-washi-deep: 43 25 29; /* #2B191D — khối nền phụ/card, nhỉnh sáng hơn nền */
+  --color-sumi: 251 238 221; /* #FBEEDD — chữ chính, kem Old Lace dịu */
+  --color-sumi-soft: 185 155 152; /* #B99B98 — chữ phụ */
+
+  --color-ai: 216 115 124; /* Cordovan sáng hơn để đủ tương phản trên nền tối */
+  --color-ai-deep: 182 80 91; /* hover — đậm hơn 1 chút so với ai */
+  --color-ai-soft: 232 160 167;
+
+  --color-beni: 226 112 122;
+  --color-beni-deep: 184 75 84;
+  --color-kin: 224 179 120;
+  --color-line: 62 38 43;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #fff5ee;
-  color: #3b2a2c;
+  @apply bg-washi text-sumi transition-colors duration-200;
 }
 
 ::selection {
-  background: #bc8f8f;
-  color: #fff5ee;
+  @apply bg-ai text-washi;
 }
 
 /* Visible keyboard focus everywhere */
@@ -22,9 +64,8 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #a9575a;
-  outline-offset: 2px;
-  border-radius: 4px;
+  @apply outline-2 outline-offset-2 outline-beni rounded;
+  outline-style: solid;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -48,8 +89,8 @@ textarea:focus-visible {
  * gợi ý chất liệu chứ không cạnh tranh với nội dung. */
 .texture-grid {
   background-image:
-    linear-gradient(rgba(59, 42, 44, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 42, 44, 0.06) 1px, transparent 1px);
+    linear-gradient(rgb(var(--color-sumi) / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--color-sumi) / 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -59,15 +100,15 @@ textarea:focus-visible {
  * nghiệm đều dùng chung khối này. */
 .kanji-cell {
   position: relative;
-  border: 1.5px solid rgba(59, 42, 44, 0.35);
-  background-color: rgba(255, 245, 238, 0.6);
+  border: 1.5px solid rgb(var(--color-sumi) / 0.35);
+  background-color: rgb(var(--color-washi) / 0.6);
 }
 
 .kanji-cell::before,
 .kanji-cell::after {
   content: "";
   position: absolute;
-  background: rgba(59, 42, 44, 0.18);
+  background: rgb(var(--color-sumi) / 0.18);
 }
 
 /* vạch giữa chiều ngang */
@@ -94,8 +135,8 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #a9575a;
-  color: #a9575a;
+  border: 2px solid rgb(var(--color-beni));
+  color: rgb(var(--color-beni));
   border-radius: 6px;
   transform: rotate(-4deg);
 }
@@ -107,7 +148,7 @@ input[type="search"]::-webkit-search-cancel-button {
   width: 16px;
   margin-left: 6px;
   cursor: pointer;
-  background-color: #bc8f8f;
+  background-color: rgb(var(--color-ai));
   -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg>");
   mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg>");
   -webkit-mask-repeat: no-repeat;
@@ -126,5 +167,5 @@ input[type="search"]::-webkit-search-cancel-button:hover {
 }
 
 input[type="search"] {
-  caret-color: #a9575a;
+  caret-color: rgb(var(--color-beni));
 }
