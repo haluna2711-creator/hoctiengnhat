@@ -69,6 +69,8 @@ function LuyenTapInner() {
   const [kanjiDirection, setKanjiDirection] = useState<KanjiDirection>("xuoi");
   const [flashcardReviewMode, setFlashcardReviewMode] = useState<FlashcardReviewMode>("due");
   const [questionCount, setQuestionCount] = useState(10);
+  const [autoAdvance, setAutoAdvance] = useState(false);
+  const [countdownEnabled, setCountdownEnabled] = useState(true);
   const [pool, setPool] = useState<Vocab[]>([]);
   const [result, setResult] = useState<SessionResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -207,6 +209,42 @@ function LuyenTapInner() {
             </div>
           )}
 
+          {mode !== "flashcard" && (
+            <div>
+              <p className="mb-3 text-sm font-semibold text-sumi">Kiểm tra (đếm ngược 20 giây)</p>
+              <div className="flex flex-wrap gap-2">
+                <Chip active={countdownEnabled} onClick={() => setCountdownEnabled(true)}>
+                  Bật — giới hạn 20 giây
+                </Chip>
+                <Chip active={!countdownEnabled} onClick={() => setCountdownEnabled(false)}>
+                  Tắt — không giới hạn giờ
+                </Chip>
+              </div>
+              <p className="mt-2 text-xs text-sumi-soft">
+                {mode === "match"
+                  ? "Mỗi vòng có 20 giây cho mỗi cặp từ. Hết giờ mà chưa ghép xong, các cặp còn lại sẽ tự tính là sai và chuyển sang vòng tiếp theo."
+                  : "Mỗi câu có 20 giây để trả lời. Hết giờ mà chưa chọn đáp án sẽ tự động tính là sai và chuyển sang câu tiếp theo."}
+              </p>
+            </div>
+          )}
+
+          {(mode === "mc" || mode === "hiragana" || mode === "kanji") && (
+            <div>
+              <p className="mb-3 text-sm font-semibold text-sumi">Tự động chuyển câu</p>
+              <div className="flex flex-wrap gap-2">
+                <Chip active={autoAdvance} onClick={() => setAutoAdvance(true)}>
+                  Bật — tự chuyển sau khi trả lời
+                </Chip>
+                <Chip active={!autoAdvance} onClick={() => setAutoAdvance(false)}>
+                  Tắt — tự bấm "Câu tiếp theo"
+                </Chip>
+              </div>
+              <p className="mt-2 text-xs text-sumi-soft">
+                Sau khi có kết quả (đúng/sai/hết giờ), tự động sang câu tiếp theo mà không cần bấm nút.
+              </p>
+            </div>
+          )}
+
           <div>
             <p className="mb-3 text-sm font-semibold text-sumi">{countLabelFor(mode)}</p>
             <div className="flex flex-wrap gap-2">
@@ -239,6 +277,8 @@ function LuyenTapInner() {
               mode={mode}
               kanjiDirection={kanjiDirection}
               questionCount={questionCount}
+              autoAdvance={autoAdvance}
+              countdownEnabled={countdownEnabled}
               onFinish={handleScoreFinish}
             />
           )}
@@ -256,6 +296,7 @@ function LuyenTapInner() {
               key={sessionKey}
               pool={pool}
               questionCount={questionCount}
+              countdownEnabled={countdownEnabled}
               onFinish={handleMatchFinish}
             />
           )}
