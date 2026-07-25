@@ -40,8 +40,7 @@ export default function NapTuVungPage() {
       <div className="mx-auto max-w-sm px-5 py-16">
         <h1 className="font-display text-2xl text-sumi">Nạp từ vựng</h1>
         <p className="mt-2 text-sm text-sumi-soft">
-          Trang này dùng để thêm từ mới, cần mật khẩu để tránh người lạ
-          chỉnh sửa kho từ vựng.
+          Trang này dùng để thêm từ mới, bạn đã được cấp quyền thêm vào kho dữ liệu? Vui lòng nhập mật khẩu.
         </p>
         <form onSubmit={handleUnlock} className="mt-5 flex flex-col gap-3">
           <input
