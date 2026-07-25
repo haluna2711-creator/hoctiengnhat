@@ -174,7 +174,7 @@ export default function PracticeSession({
           <div className="mt-6 flex items-center justify-between gap-4">
             <p
               className={`text-sm font-semibold ${
-                feedback === "correct" ? "text-ai" : "text-beni-deep"
+                feedback === "correct" ? "text-midori-deep" : "text-beni-deep"
               }`}
             >
               {feedback === "correct" ? "Chính xác!" : "Chưa đúng."}
@@ -244,7 +244,6 @@ function McQuestionView({
               <HeadwordCells word={headword(vocab)} />
               <SpeakerButton hiragana={vocab.hiragana} audioUrl={vocab.audio_url} />
             </div>
-     
           </div>
         ) : (
           <p className="text-xl text-sumi">{vocab.meaning}</p>
@@ -258,9 +257,13 @@ function McQuestionView({
           const isWrongSelected = feedback !== "idle" && isSelected && i !== correctIndex;
 
           let cls =
-            "rounded-lg border px-4 py-3 text-left text-sm transition border-line hover:border-ai";
-          if (isCorrectOpt) cls = "rounded-lg border-2 border-ai bg-ai/10 px-4 py-3 text-left text-sm text-ai-deep";
-          else if (isWrongSelected) cls = "rounded-lg border-2 border-beni bg-beni/10 px-4 py-3 text-left text-sm text-beni-deep";
+            "flex items-center justify-between gap-2 rounded-lg border px-4 py-3 text-left text-sm transition border-line hover:border-ai";
+          if (isCorrectOpt)
+            cls =
+              "flex items-center justify-between gap-2 rounded-lg border-2 border-midori bg-midori/10 px-4 py-3 text-left text-sm font-medium text-midori-deep";
+          else if (isWrongSelected)
+            cls =
+              "flex items-center justify-between gap-2 rounded-lg border-2 border-beni bg-beni/10 px-4 py-3 text-left text-sm font-medium text-beni-deep";
 
           return (
             <button
@@ -270,7 +273,17 @@ function McQuestionView({
               onClick={() => onSelect(i)}
               className={`${cls} ${direction === "meaning-to-word" ? "font-jp text-lg" : ""}`}
             >
-              {opt}
+              <span>{opt}</span>
+              {isCorrectOpt && (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-midori text-xs text-washi">
+                  ✓
+                </span>
+              )}
+              {isWrongSelected && (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-beni text-xs text-washi">
+                  ✗
+                </span>
+              )}
             </button>
           );
         })}
