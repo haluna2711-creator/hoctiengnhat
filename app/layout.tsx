@@ -10,18 +10,23 @@ import BackToTop from "@/components/BackToTop";
 // subset "vietnamese" (Shippori Mincho trước đây chỉ có "latin" nên
 // dấu tiếng Việt bị vỡ/thiếu). Playfair Display có bảng chữ Việt đầy
 // đủ và vẫn giữ được cảm giác serif thanh lịch hợp với bảng màu mới.
+// Chỉ tải 500 (mặc định cho heading, do không có class font-weight
+// nào được gán riêng nên trình duyệt tự khớp về weight gần nhất) và
+// 600 (dùng cho tên thương hiệu ở Header) — 700 chưa từng được dùng.
 const display = Playfair_Display({
   subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600"],
   variable: "--font-display",
 });
 
 // Mincho Nhật Bản — CHỈ dùng cho nội dung tiếng Nhật thật sự (kanji,
 // hiragana trong thẻ từ vựng / ô luyện tập), nơi không có dấu tiếng
 // Việt nên không cần subset "vietnamese".
+// Chỉ tải 400 (mặc định, dùng ở hầu hết mọi nơi) và 600 (tên thương
+// hiệu ở Header/Footer) — 500 và 700 chưa từng được dùng trong code.
 const jp = Shippori_Mincho({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600"],
   variable: "--font-jp",
 });
 
