@@ -1,26 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { JLPT_LEVELS, type JlptLevel, type Vocab } from "@/lib/types";
 import { fetchVocabList } from "@/lib/vocab";
 import VocabCard from "@/components/VocabCard";
+
+const PAGE_SIZE = 60;
 
 export default function VocabListPage() {
   const [level, setLevel] = useState<JlptLevel | "all">("all");
   const [search, setSearch] = useState("");
   const [vocab, setVocab] = useState<Vocab[]>([]);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const isFirstRun = useRef(true);
 
+  // Đổi filter (cấp độ/tìm kiếm) -> luôn tải lại từ trang đầu tiên.
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setErrorMsg(null);
 
+    // Lần tải đầu tiên khi vào trang không cần debounce — chỉ debounce
+    // khi người dùng đang gõ tìm kiếm, để trang hiện dữ liệu ngay từ
+    // lượt đầu thay vì luôn phải chờ thêm 250ms vô ích.
+    const delay = isFirstRun.current ? 0 : 250;
+    isFirstRun.current = false;
+
     const timeout = setTimeout(() => {
-      fetchVocabList({ level, search })
-        .then((data) => {
-          if (!cancelled) setVocab(data);
+      fetchVocabList({ level, search, limit: PAGE_SIZE, offset: 0 })
+        .then((page) => {
+          if (cancelled) return;
+          setVocab(page.rows);
+          setHasMore(page.hasMore);
         })
         .catch(() => {
           if (!cancelled) {
@@ -32,13 +46,31 @@ export default function VocabListPage() {
         .finally(() => {
           if (!cancelled) setLoading(false);
         });
-    }, 250); // debounce nhẹ khi gõ tìm kiếm
+    }, delay);
 
     return () => {
       cancelled = true;
       clearTimeout(timeout);
     };
   }, [level, search]);
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    try {
+      const page = await fetchVocabList({
+        level,
+        search,
+        limit: PAGE_SIZE,
+        offset: vocab.length,
+      });
+      setVocab((prev) => [...prev, ...page.rows]);
+      setHasMore(page.hasMore);
+    } catch {
+      setErrorMsg("Không tải thêm được — thử lại sau.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-12">
@@ -94,11 +126,25 @@ export default function VocabListPage() {
         )}
 
         {!errorMsg && !loading && vocab.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {vocab.map((v) => (
-              <VocabCard key={v.id} vocab={v} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {vocab.map((v) => (
+                <VocabCard key={v.id} vocab={v} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="rounded-full border border-line px-6 py-2.5 text-sm font-semibold text-sumi transition hover:border-ai hover:text-ai disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loadingMore ? "Đang tải..." : "Tải thêm"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
