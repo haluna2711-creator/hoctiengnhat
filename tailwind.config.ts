@@ -8,22 +8,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Giấy washi — nền chính, ấm và hơi xám hơn "cream" thông thường.
-        washi: "#F2ECDD",
-        "washi-deep": "#E7DDC5",
-        // Mực sumi — chữ, gần đen nhưng ngả nâu ấm chứ không phải đen thuần.
-        sumi: "#25221D",
-        "sumi-soft": "#57503F",
-        // Chàm Aizome — màu nhấn chính (nút, link, tiêu đề).
-        ai: "#2B4C6E",
-        "ai-deep": "#1C3348",
-        "ai-soft": "#5F7C97",
-        // Đỏ triện Hanko — dùng rất tiết chế: đúng/nhấn mạnh/dấu mốc.
-        beni: "#A93B32",
-        "beni-deep": "#832A23",
-        // Kim — nhãn cấp độ JLPT.
-        kin: "#A3823C",
-        line: "#CBBE9E",
+        // Nền chính — Seashell #FFF5EE, ấm và sáng như trong bảng màu tham khảo.
+        washi: "#FFF5EE",
+        "washi-deep": "#F6E3DA",
+        // Chữ chính — nâu plum đậm, ấm hơn đen thuần để hợp tông hồng đất.
+        sumi: "#3B2A2C",
+        "sumi-soft": "#8C6B6B",
+        // Rosy Brown #BC8F8F — màu nhấn chính (nút, link, tiêu đề, khối lớn).
+        ai: "#BC8F8F",
+        "ai-deep": "#93696A",
+        "ai-soft": "#D8B7B7",
+        // Đỏ hồng đất — dùng tiết chế: đúng/nhấn mạnh/dấu mốc.
+        beni: "#A9575A",
+        "beni-deep": "#833F42",
+        // Vàng ấm — nhãn cấp độ JLPT.
+        kin: "#B08A5B",
+        line: "#E7D0C8",
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],
@@ -32,11 +32,11 @@ const config: Config = {
       },
       backgroundImage: {
         "hero-grid":
-          "linear-gradient(135deg, #F2ECDD 0%, #EAE1CB 60%, #E7DDC5 100%)",
+          "linear-gradient(135deg, #FFF5EE 0%, #F9E4DC 60%, #F6E3DA 100%)",
       },
       boxShadow: {
-        soft: "0 10px 30px -12px rgba(37, 34, 29, 0.16)",
-        card: "0 6px 18px -8px rgba(37, 34, 29, 0.14)",
+        soft: "0 10px 30px -12px rgba(59, 42, 44, 0.18)",
+        card: "0 6px 18px -8px rgba(59, 42, 44, 0.16)",
       },
       borderRadius: {
         xl2: "1.25rem",
