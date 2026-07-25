@@ -19,20 +19,31 @@ export default function VocabCard({ vocab }: { vocab: Vocab }) {
   const chars = Array.from(head);
   const showFurigana = Boolean(vocab.kanji) && vocab.kanji !== vocab.hiragana;
 
+  // Từ càng nhiều chữ thì ô càng nhỏ lại, để những cụm dài (câu mẫu,
+  // cách chào hỏi...) vẫn gọn trong card thay vì tràn ra ngoài.
+  const cellSizeClass =
+    chars.length > 12
+      ? "h-7 w-7 text-sm sm:h-8 sm:w-8 sm:text-base"
+      : chars.length > 8
+        ? "h-8 w-8 text-base sm:h-9 sm:w-9 sm:text-xl"
+        : chars.length > 5
+          ? "h-9 w-9 text-lg sm:h-10 sm:w-10 sm:text-2xl"
+          : "h-11 w-11 text-2xl sm:h-12 sm:w-12 sm:text-3xl";
+
   return (
     <div className="rounded-xl2 border border-line/70 bg-washi/70 p-5 shadow-card transition hover:border-ai/50 hover:shadow-soft">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           {showFurigana && (
             <p className="mb-1 font-jp text-xs tracking-wide text-sumi-soft">
               {vocab.hiragana}
             </p>
           )}
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {chars.map((ch, i) => (
               <div
                 key={i}
-                className="kanji-cell flex h-11 w-11 items-center justify-center rounded-sm font-jp text-2xl text-sumi sm:h-12 sm:w-12 sm:text-3xl"
+                className={`kanji-cell flex shrink-0 items-center justify-center rounded-sm font-jp text-sumi ${cellSizeClass}`}
               >
                 {ch}
               </div>
