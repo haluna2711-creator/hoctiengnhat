@@ -2,6 +2,13 @@ import Link from "next/link";
 import { JLPT_LEVELS } from "@/lib/types";
 import { countVocabByLevel } from "@/lib/vocab";
 
+// Cache trang chủ 5 phút (ISR): số đếm từ vựng không cần realtime
+// tuyệt đối, nhưng nếu không khai báo rõ, Next có thể coi route này là
+// hoàn toàn tĩnh (số đếm bị đơ mãi từ lúc build) hoặc hoàn toàn động
+// (mỗi lượt truy cập đều phải chờ round-trip tới Supabase). Khai báo
+// revalidate để vừa nhanh (phục vụ từ cache) vừa tự cập nhật định kỳ.
+export const revalidate = 300;
+
 export default async function HomePage() {
   let counts: Record<string, number> = {};
   try {
