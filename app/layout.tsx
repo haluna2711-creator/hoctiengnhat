@@ -42,13 +42,33 @@ export const metadata: Metadata = {
     "Nạp từ vựng nhanh, luyện tập bằng trắc nghiệm, nhập hiragana và viết kanji hai chiều — theo từng cấp độ JLPT.",
 };
 
+// Chạy TRƯỚC khi React hydrate để tránh nháy màu (FOUC): đọc lựa chọn
+// theme đã lưu (localStorage) hoặc theo cấu hình hệ thống nếu người
+// dùng chưa từng chọn, rồi gắn class "dark" lên <html> ngay lập tức.
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var stored = localStorage.getItem("theme");
+    var isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (isDark) document.documentElement.classList.add("dark");
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className={`${display.variable} ${jp.variable} ${body.variable}`}>
+    <html
+      lang="vi"
+      className={`${display.variable} ${jp.variable} ${body.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="font-body min-h-screen flex flex-col antialiased overflow-x-hidden">
         <BackgroundArt />
         <Header />
