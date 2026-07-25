@@ -122,8 +122,25 @@ export async function POST(req: Request) {
     if (!resendRes.ok) {
       const errBody = await resendRes.text();
       console.error("[report-error] Resend API error:", resendRes.status, errBody);
+
+      // Cố gắng lấy message cụ thể từ Resend để trả về cho người dùng —
+      // giúp tự chẩn đoán (VD: "onboarding@resend.dev chỉ gửi được tới
+      // email đăng ký tài khoản Resend" khi chưa verify domain riêng)
+      // thay vì chỉ thấy 1 câu chung chung không rõ nguyên nhân.
+      let reason = "";
+      try {
+        const parsed = JSON.parse(errBody) as { message?: string };
+        reason = parsed.message ?? "";
+      } catch {
+        // errBody không phải JSON hợp lệ — bỏ qua, dùng thông báo mặc định.
+      }
+
       return NextResponse.json(
-        { error: "Gửi email thất bại. Vui lòng thử lại sau." },
+        {
+          error: reason
+            ? `Gửi email thất bại: ${reason}`
+            : "Gửi email thất bại. Vui lòng thử lại sau.",
+        },
         { status: 502 }
       );
     }
