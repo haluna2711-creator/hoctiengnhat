@@ -96,13 +96,13 @@ export default async function HomePage() {
         <div className="rounded-xl2 border border-line/70 bg-washi-deep/60 p-6 sm:p-8">
           <h2 className="font-display text-2xl text-sumi">Nạp từ vựng thật nhanh</h2>
           <p className="mt-2 max-w-2xl text-sumi-soft">
-            Bạn muốn trở thành người đóng góp cho kho dữ liệu từ vựng tiếng Nhật đồ sộ? Liên hệ admin qua email: linmaxcorner@gmail.com.
+            Bạn muốn trở thành người đóng góp cho kho dữ liệu từ vựng tiếng Nhật đồ sộ? Liên hệ admin qua email bên dưới.
           </p>
           <Link
-            href="/nap-tu-vung"
+            href="mailto:linmaxcorner@gmail.com"
             className="mt-5 inline-block rounded-full bg-beni px-6 py-3 text-sm font-semibold text-washi shadow-card transition hover:bg-beni-deep"
           >
-            Đi tới trang Nạp từ vựng
+            Gửi email cho admin
           </Link>
         </div>
       </section>
