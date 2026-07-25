@@ -36,14 +36,14 @@ export default function BackToTop() {
         viewBox="0 0 100 100"
         className="h-full w-full drop-shadow-soft transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-active:scale-90"
       >
-        <circle cx="50" cy="50" r="47" fill="#F2ECDD" stroke="#A93B32" strokeWidth="3" />
-        <circle cx="50" cy="50" r="40" fill="none" stroke="#A93B32" strokeWidth="1.4" opacity="0.6" />
+        <circle cx="50" cy="50" r="47" fill="#FFF5EE" stroke="#A9575A" strokeWidth="3" />
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#A9575A" strokeWidth="1.4" opacity="0.6" />
         <path
           d="M50 38 L61 58 L39 58 Z"
-          fill="#A93B32"
+          fill="#A9575A"
           className="transition-transform duration-300 group-hover:-translate-y-0.5"
         />
-        <rect x="42" y="60" width="16" height="4" rx="1" fill="#A93B32" />
+        <rect x="42" y="60" width="16" height="4" rx="1" fill="#A9575A" />
       </svg>
       <span className="sr-only">Lên đầu trang</span>
     </button>
