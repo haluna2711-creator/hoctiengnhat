@@ -30,9 +30,7 @@ export default async function HomePage() {
           mỗi ngày một từ.
         </h1>
         <p className="mt-5 max-w-xl text-base text-sumi-soft sm:text-lg">
-          Luyện từ vựng tiếng Nhật theo cấp độ JLPT — chọn đáp án đúng,
-          gõ hiragana, và viết kanji theo cả hai chiều xuôi/ngược. Nạp
-          bộ từ mới của riêng bạn chỉ bằng cách dán một danh sách.
+          Luyện từ vựng tiếng Nhật theo cấp độ JLPT. Học ngay đi bạn toi!
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
