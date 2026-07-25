@@ -5,6 +5,7 @@ import { headword, type Vocab } from "@/lib/types";
 import { shuffle } from "@/lib/practice";
 import { filterDuePool, getDueStats, reviewCard, type SrsGrade } from "@/lib/srs";
 import SpeakerButton from "@/components/SpeakerButton";
+import ReportErrorButton from "@/components/ReportErrorButton";
 
 export type FlashcardReviewMode = "due" | "all";
 
@@ -209,6 +210,16 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Nút báo lỗi — đứng ngoài khối lật (rotateY) nên luôn hiển thị
+              cố định ở góc thẻ dù đang ở mặt trước hay mặt sau. Chặn
+              pointerdown lan lên thẻ để không bị coi là thao tác vuốt/lật. */}
+          <div
+            className="absolute bottom-3 right-3 z-20"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <ReportErrorButton vocab={current} />
           </div>
         </div>
       </div>
