@@ -1,14 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Vocab } from "@/lib/types";
 
 const MAX_MESSAGE_LENGTH = 2000;
 
-/** Nút cờ nhỏ trên thẻ từ vựng — bấm vào mở popup để báo lỗi nội dung
- * của từ này (sai nghĩa, sai cách đọc, ví dụ lỗi...). Nội dung được
- * gửi qua email cho quản trị viên bằng API route `/api/report-error`. */
-export default function ReportErrorButton({ vocab }: { vocab: Vocab }) {
+/** Dữ liệu tối thiểu cần có để báo lỗi 1 mục — dùng chung được cho cả
+ * thẻ từ vựng (Vocab) lẫn thẻ Hán tự (KanjiEntry), vì cả hai đều có
+ * đủ các trường này (kanji/hiragana là tuỳ chọn với Hán tự). */
+export interface ReportableEntry {
+  id: string;
+  kanji?: string | null;
+  hiragana?: string | null;
+  meaning?: string | null;
+  jlpt_level?: string;
+}
+
+/** Nút cờ nhỏ trên thẻ từ vựng / thẻ Hán tự — bấm vào mở popup để báo
+ * lỗi nội dung của mục này (sai nghĩa, sai cách đọc, ví dụ lỗi...).
+ * Nội dung được gửi qua email cho quản trị viên bằng API route
+ * `/api/report-error`. */
+export default function ReportErrorButton({ vocab }: { vocab: ReportableEntry }) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [reporterEmail, setReporterEmail] = useState("");
