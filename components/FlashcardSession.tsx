@@ -128,11 +128,11 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium tracking-wide text-sumi-soft">
+        <p className="text-sm font-medium tracking-wide text-sumi-soft lg:text-base">
           Thẻ {index + 1}/{words.length} · Đã thuộc {known}
         </p>
         {reviewMode === "due" && (
-          <p className="text-xs text-sumi-soft">
+          <p className="text-xs text-sumi-soft sm:text-sm">
             Hôm nay: {stats.newCount} thẻ mới · {stats.dueCount} thẻ đến hạn
           </p>
         )}
@@ -144,7 +144,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
-          className="relative mx-auto h-72 max-w-md cursor-grab touch-pan-y select-none active:cursor-grabbing sm:h-80"
+          className="relative mx-auto h-72 max-w-md cursor-grab touch-pan-y select-none active:cursor-grabbing sm:h-80 lg:h-96 lg:max-w-lg"
           style={cardStyle}
         >
           {/* Nhãn nổi khi đang vuốt */}
@@ -171,22 +171,21 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
           >
             {/* Mặt trước */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl2 border border-line/70 bg-washi/80 p-6 text-center shadow-card"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl2 border border-line/70 bg-washi/80 p-6 text-center shadow-card sm:p-8 lg:p-10"
               style={{ backfaceVisibility: "hidden" }}
             >
-              <span className="rounded-full bg-ai/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ai-deep">
+              <span className="rounded-full bg-ai/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ai-deep sm:text-sm">
                 {current.jlpt_level.toUpperCase()}
               </span>
-              <p className="font-jp text-5xl text-sumi sm:text-6xl">{headword(current)}</p>
+              <p className="font-jp text-5xl text-sumi sm:text-6xl lg:text-7xl">{headword(current)}</p>
               <div onPointerDown={(e) => e.stopPropagation()}>
                 <SpeakerButton hiragana={current.hiragana} audioUrl={current.audio_url} />
               </div>
-              <p className="text-xs text-sumi-soft">Chạm vào thẻ để lật xem nghĩa</p>
-            </div>
+              <p className="text-xs text-sumi-soft sm:text-sm">Chạm vào thẻ để lật xem nghĩa</p>
 
             {/* Mặt sau */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-y-auto rounded-xl2 border border-line/70 bg-washi-deep/70 p-6 text-center shadow-card"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-y-auto rounded-xl2 border border-line/70 bg-washi-deep/70 p-6 text-center shadow-card sm:p-8 lg:p-10"
               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
             >
               {current.kanji && current.kanji.trim() && (
@@ -194,15 +193,15 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
                   className="flex items-center gap-2"
                   onPointerDown={(e) => e.stopPropagation()}
                 >
-                  <p className="font-jp text-2xl text-sumi">{current.hiragana}</p>
+                  <p className="font-jp text-2xl text-sumi sm:text-3xl lg:text-4xl">{current.hiragana}</p>
                   <SpeakerButton hiragana={current.hiragana} audioUrl={current.audio_url} size="sm" />
                 </div>
               )}
-              {current.romaji && <p className="text-sm text-sumi-soft">{current.romaji}</p>}
-              <p className="mt-1 text-xl font-semibold text-ai-deep">{current.meaning}</p>
+              {current.romaji && <p className="text-sm text-sumi-soft sm:text-base lg:text-lg">{current.romaji}</p>}
+              <p className="mt-1 text-xl font-semibold text-ai-deep sm:text-2xl lg:text-3xl">{current.meaning}</p>
               {current.example_jp && (
-                <div className="mt-3 border-t border-line/60 pt-3 text-sm">
-                  <p className="font-jp text-lg text-sumi sm:text-xl">{current.example_jp}</p>
+                <div className="mt-3 border-t border-line/60 pt-3 text-sm sm:text-base">
+                  <p className="font-jp text-lg text-sumi sm:text-xl lg:text-2xl">{current.example_jp}</p>
                   {current.example_romaji && (
                     <p className="mt-0.5 text-sumi-soft">{current.example_romaji}</p>
                   )}
@@ -229,7 +228,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
           type="button"
           disabled={!flipped || phase !== "idle"}
           onClick={() => commitGrade("again")}
-          className="rounded-full border border-sumi-soft px-5 py-2.5 text-sm font-semibold text-sumi-soft transition hover:border-beni hover:text-beni-deep disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-full border border-sumi-soft px-5 py-2.5 text-sm font-semibold text-sumi-soft transition hover:border-beni hover:text-beni-deep disabled:cursor-not-allowed disabled:opacity-40 lg:px-7 lg:py-3 lg:text-base"
         >
           👈 Chưa thuộc
         </button>
@@ -237,7 +236,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
           type="button"
           disabled={!flipped || phase !== "idle"}
           onClick={() => commitGrade("good")}
-          className="rounded-full bg-ai px-5 py-2.5 text-sm font-semibold text-washi transition hover:bg-ai-deep disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-full bg-ai px-5 py-2.5 text-sm font-semibold text-washi transition hover:bg-ai-deep disabled:cursor-not-allowed disabled:opacity-40 lg:px-7 lg:py-3 lg:text-base"
         >
           Đã thuộc 👉
         </button>
