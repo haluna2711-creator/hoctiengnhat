@@ -144,7 +144,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
-          className="relative mx-auto h-72 max-w-md cursor-grab touch-pan-y select-none active:cursor-grabbing sm:h-80 lg:h-96 lg:max-w-lg"
+          className="relative mx-auto max-w-md cursor-grab touch-pan-y select-none active:cursor-grabbing lg:max-w-lg"
           style={cardStyle}
         >
           {/* Nhãn nổi khi đang vuốt */}
@@ -161,8 +161,13 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
             CHƯA THUỘC
           </div>
 
+          {/* Cả 2 mặt cùng nằm 1 ô lưới (col-start-1 row-start-1) — CSS
+             Grid tự co giãn chiều cao của ô theo mặt có nội dung DÀI HƠN,
+             cả 2 mặt cùng "stretch" theo chiều cao đó. Nhờ vậy thẻ luôn
+             vừa khít nội dung thật (nghĩa dài, có câu ví dụ...) mà không
+             cần chiều cao cố định + thanh cuộn bên trong như trước. */}
           <div
-            className="relative h-full w-full"
+            className="grid"
             style={{
               transformStyle: "preserve-3d",
               transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
@@ -171,7 +176,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
           >
             {/* Mặt trước */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl2 border border-line/70 bg-washi/80 p-6 text-center shadow-card sm:p-8 lg:p-10"
+              className="col-start-1 row-start-1 flex min-h-[18rem] flex-col items-center justify-center gap-3 rounded-xl2 border border-line/70 bg-washi/80 p-6 text-center shadow-card sm:min-h-[20rem] sm:p-8 lg:min-h-[24rem] lg:p-10"
               style={{ backfaceVisibility: "hidden" }}
             >
               <span className="rounded-full bg-ai/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ai-deep sm:text-sm">
@@ -186,7 +191,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
 
             {/* Mặt sau */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-y-auto rounded-xl2 border border-line/70 bg-washi-deep/70 p-6 text-center shadow-card sm:p-8 lg:p-10"
+              className="col-start-1 row-start-1 flex min-h-[18rem] flex-col items-center justify-center gap-2 rounded-xl2 border border-line/70 bg-washi-deep/70 p-6 text-center shadow-card sm:min-h-[20rem] sm:p-8 lg:min-h-[24rem] lg:p-10"
               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
             >
               {current.kanji && current.kanji.trim() && (
