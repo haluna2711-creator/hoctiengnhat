@@ -24,7 +24,7 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-5 pb-14 pt-14 sm:pt-20">
         <p className="font-jp text-sm tracking-[0.3em] text-beni">語彙帳</p>
-        <h1 className="mt-3 max-w-2xl font-display text-4xl leading-tight text-sumi sm:text-5xl">
+        <h1 className="mt-3 max-w-2xl font-display text-4xl leading-snug text-sumi sm:text-5xl sm:leading-snug">
           Mỗi ô một chữ,
           <br />
           mỗi ngày một từ.
