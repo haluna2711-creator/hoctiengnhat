@@ -7,7 +7,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const NAV_LINKS = [
   { href: "/", label: "Trang chủ" },
   { href: "/tu-vung", label: "Sổ từ vựng" },
-  { href: "/chu-han", label: "Tra cứu Hán tự" },
+  { href: "/han-tu", label: "Tra cứu Hán tự" },
   { href: "/luyen-tap", label: "Luyện tập" },
   { href: "/danh-gia", label: "Đánh giá" },
   { href: "/nap-tu-vung", label: "Nạp từ vựng" },
