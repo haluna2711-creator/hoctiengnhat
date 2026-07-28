@@ -176,14 +176,14 @@ export default function MatchSession({ pool, questionCount, countdownEnabled, on
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium tracking-wide text-sumi-soft">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium tracking-wide text-sumi-soft lg:text-base">
         <p>
           Vòng {roundIndex + 1}/{rounds.length}
         </p>
         <div className="flex items-center gap-2">
           {countdownEnabled && (
             <span
-              className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold tabular-nums ${
+              className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold tabular-nums sm:text-sm ${
                 roundTimeLeft <= 10
                   ? "border-beni bg-beni/10 text-beni-deep"
                   : "border-line text-sumi-soft"
@@ -198,23 +198,23 @@ export default function MatchSession({ pool, questionCount, countdownEnabled, on
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3">
+      <div className="mt-4 grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:gap-4">
         {cards.map((card) => {
           const isMatched = matchedIds.has(card.vocabId);
           const isSelected = selected.some((s) => s.id === card.id);
           const isWrong = wrongIds.has(card.id);
 
           let cls =
-            "rounded-lg border px-3 py-4 text-center text-sm transition min-h-[4.5rem] flex items-center justify-center border-line hover:border-ai";
+            "rounded-lg border px-3 py-4 text-center text-sm transition min-h-[4.5rem] flex items-center justify-center border-line hover:border-ai sm:min-h-[5.5rem] sm:px-4 sm:py-5 sm:text-base lg:min-h-[6.5rem] lg:px-5 lg:py-6 lg:text-lg";
           if (isMatched) {
             cls =
-              "rounded-lg border px-3 py-4 text-center text-sm min-h-[4.5rem] flex items-center justify-center border-ai/30 bg-ai/5 text-ai/40 opacity-0 pointer-events-none transition-opacity duration-300";
+              "rounded-lg border px-3 py-4 text-center text-sm min-h-[4.5rem] flex items-center justify-center border-ai/30 bg-ai/5 text-ai/40 opacity-0 pointer-events-none transition-opacity duration-300 sm:min-h-[5.5rem] sm:px-4 sm:py-5 sm:text-base lg:min-h-[6.5rem] lg:px-5 lg:py-6 lg:text-lg";
           } else if (isWrong) {
             cls =
-              "rounded-lg border-2 border-beni bg-beni/10 px-3 py-4 text-center text-sm text-beni-deep min-h-[4.5rem] flex items-center justify-center";
+              "rounded-lg border-2 border-beni bg-beni/10 px-3 py-4 text-center text-sm text-beni-deep min-h-[4.5rem] flex items-center justify-center sm:min-h-[5.5rem] sm:px-4 sm:py-5 sm:text-base lg:min-h-[6.5rem] lg:px-5 lg:py-6 lg:text-lg";
           } else if (isSelected) {
             cls =
-              "rounded-lg border-2 border-ai bg-ai/10 px-3 py-4 text-center text-sm text-ai-deep min-h-[4.5rem] flex items-center justify-center";
+              "rounded-lg border-2 border-ai bg-ai/10 px-3 py-4 text-center text-sm text-ai-deep min-h-[4.5rem] flex items-center justify-center sm:min-h-[5.5rem] sm:px-4 sm:py-5 sm:text-base lg:min-h-[6.5rem] lg:px-5 lg:py-6 lg:text-lg";
           }
 
           return (
@@ -223,7 +223,7 @@ export default function MatchSession({ pool, questionCount, countdownEnabled, on
               type="button"
               disabled={isMatched}
               onClick={() => handleClick(card)}
-              className={`${cls} ${card.type === "word" ? "font-jp text-lg" : ""}`}
+              className={`${cls} ${card.type === "word" ? "font-jp text-lg sm:text-xl lg:text-2xl" : ""}`}
             >
               {card.label}
             </button>
