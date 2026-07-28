@@ -1,6 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { KanjiEntry, Vocab } from "@/lib/types";
 import { headword } from "@/lib/types";
 import SpeakerButton from "@/components/SpeakerButton";
+import ReportErrorButton from "@/components/ReportErrorButton";
 
 const LEVEL_LABEL: Record<string, string> = {
   n5: "N5",
@@ -11,7 +15,9 @@ const LEVEL_LABEL: Record<string, string> = {
   khac: "Khác",
 };
 
-const MAX_RELATED_SHOWN = 6;
+/** Số từ vựng liên quan hiển thị trực tiếp trên thẻ — phần còn lại chỉ
+ * xem được khi bấm mở popup danh sách đầy đủ. */
+const MAX_RELATED_SHOWN = 5;
 
 interface KanjiCardProps {
   kanji: KanjiEntry;
@@ -32,7 +38,7 @@ interface KanjiCardProps {
  * động cập nhật theo dữ liệu vocab hiện có. */
 export default function KanjiCard({ kanji, relatedVocab, relatedLoading }: KanjiCardProps) {
   return (
-    <div className="relative rounded-xl2 border border-line/70 bg-washi/70 p-5 shadow-card transition hover:border-ai/50 hover:shadow-soft">
+    <div className="relative rounded-xl2 border border-line/70 bg-washi/70 p-5 pb-11 shadow-card transition hover:border-ai/50 hover:shadow-soft">
       <div className="flex items-start gap-4">
         {/* Chữ Hán trong ô genkouyoushi */}
         <div
@@ -99,6 +105,17 @@ export default function KanjiCard({ kanji, relatedVocab, relatedLoading }: Kanji
         vocab={relatedVocab ?? []}
         loading={!!relatedLoading}
       />
+
+      <div className="absolute bottom-3 right-3">
+        <ReportErrorButton
+          vocab={{
+            id: kanji.id,
+            kanji: kanji.kanji,
+            meaning: kanji.meaning,
+            jlpt_level: kanji.jlpt_level,
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -112,6 +129,19 @@ function RelatedVocabSection({
   vocab: Vocab[];
   loading: boolean;
 }) {
+  const [showAll, setShowAll] = useState(false);
+  const hasMore = vocab.length > MAX_RELATED_SHOWN;
+
+  // Đóng popup bằng phím Esc cho tiện.
+  useEffect(() => {
+    if (!showAll) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowAll(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showAll]);
+
   return (
     <div className="mt-4 border-t border-line/60 pt-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-sumi-soft/80">
@@ -129,26 +159,82 @@ function RelatedVocabSection({
       )}
 
       {!loading && vocab.length > 0 && (
-        <ul className="mt-2 space-y-1.5">
-          {vocab.slice(0, MAX_RELATED_SHOWN).map((v) => (
-            <li key={v.id} className="flex flex-wrap items-baseline gap-x-2 text-sm">
-              <span className="font-jp font-medium text-sumi">
-                <HighlightChar text={headword(v)} char={char} />
-              </span>
-              {v.hiragana && v.hiragana !== headword(v) && (
-                <span className="font-jp text-sumi-soft/80">（{v.hiragana}）</span>
-              )}
-              <span className="text-sumi-soft">— {v.meaning}</span>
-            </li>
-          ))}
-          {vocab.length > MAX_RELATED_SHOWN && (
-            <li className="text-xs text-sumi-soft/70">
-              +{vocab.length - MAX_RELATED_SHOWN} từ khác trong sổ từ vựng
-            </li>
+        <>
+          <ul className="mt-2 space-y-1.5">
+            {vocab.slice(0, MAX_RELATED_SHOWN).map((v) => (
+              <RelatedVocabItem key={v.id} vocab={v} char={char} />
+            ))}
+          </ul>
+          {hasMore && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAll(true);
+              }}
+              className="mt-2 text-xs font-semibold text-ai transition hover:text-ai-deep hover:underline"
+            >
+              +{vocab.length - MAX_RELATED_SHOWN} từ khác — xem tất cả
+            </button>
           )}
-        </ul>
+        </>
+      )}
+
+      {showAll && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-sumi/40 p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowAll(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="related-vocab-title"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-xl2 border border-line/70 bg-washi p-6 shadow-soft"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p id="related-vocab-title" className="font-display text-lg text-sumi">
+                Từ vựng liên quan
+                <span className="ml-2 font-jp text-base text-sumi-soft">（{char}）</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowAll(false)}
+                aria-label="Đóng"
+                className="shrink-0 rounded-full p-1.5 text-sumi-soft transition hover:bg-washi-deep hover:text-sumi"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+
+            <ul className="mt-4 space-y-2">
+              {vocab.map((v) => (
+                <RelatedVocabItem key={v.id} vocab={v} char={char} />
+              ))}
+            </ul>
+          </div>
+        </div>
       )}
     </div>
+  );
+}
+
+function RelatedVocabItem({ vocab: v, char }: { vocab: Vocab; char: string }) {
+  return (
+    <li className="flex flex-wrap items-baseline gap-x-2 text-sm">
+      <span className="font-jp font-medium text-sumi">
+        <HighlightChar text={headword(v)} char={char} />
+      </span>
+      {v.hiragana && v.hiragana !== headword(v) && (
+        <span className="font-jp text-sumi-soft/80">（{v.hiragana}）</span>
+      )}
+      <span className="text-sumi-soft">— {v.meaning}</span>
+    </li>
   );
 }
 
