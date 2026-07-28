@@ -182,6 +182,7 @@ export default function FlashcardSession({ pool, reviewMode, questionCount, onFi
                 <SpeakerButton hiragana={current.hiragana} audioUrl={current.audio_url} />
               </div>
               <p className="text-xs text-sumi-soft sm:text-sm">Chạm vào thẻ để lật xem nghĩa</p>
+            </div>
 
             {/* Mặt sau */}
             <div
