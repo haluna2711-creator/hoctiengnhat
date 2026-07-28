@@ -253,12 +253,12 @@ export function HeadwordCells({ word }: { word: string }) {
   const chars = Array.from(word);
   const cellSizeClass =
     chars.length > 12
-      ? "h-9 w-9 text-lg sm:h-10 sm:w-10 sm:text-xl"
+      ? "h-11 w-11 text-xl sm:h-12 sm:w-12 sm:text-2xl"
       : chars.length > 8
-        ? "h-10 w-10 text-xl sm:h-11 sm:w-11 sm:text-2xl"
+        ? "h-12 w-12 text-2xl sm:h-14 sm:w-14 sm:text-3xl"
         : chars.length > 5
-          ? "h-12 w-12 text-2xl"
-          : "h-14 w-14 text-3xl";
+          ? "h-14 w-14 text-3xl sm:h-16 sm:w-16 sm:text-4xl"
+          : "h-16 w-16 text-4xl sm:h-20 sm:w-20 sm:text-5xl";
 
   return (
     <div className="flex flex-wrap justify-center gap-1.5">
